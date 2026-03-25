@@ -947,13 +947,13 @@ body::after {
       <div class="ssid-sub">FREE · OTP VERIFIED · BENGALURU</div>
       <label class="inp-label" for="name-field">YOUR NAME</label>
       <div class="inp-wrap">
-        <input class="phone-inp" id="name-field" type="text" maxlength="100"
+        <input class="phone-inp" id="name-field" type="text" inputmode="text" maxlength="100"
           placeholder="FULL NAME" style="font-size:0.85rem;font-weight:400;"
           oninput="checkConnectForm()">
       </div>
       <label class="inp-label" for="email-field">EMAIL ADDRESS</label>
       <div class="inp-wrap">
-        <input class="phone-inp" id="email-field" type="email"
+        <input class="phone-inp" id="email-field" type="email" inputmode="email"
           placeholder="EMAIL" style="font-size:0.85rem;font-weight:400;"
           oninput="checkConnectForm()">
       </div>
@@ -984,6 +984,7 @@ body::after {
   ════════════════════ -->
   <div class="screen" id="sc-otp">
     <div style="padding:36px 28px; display:flex; flex-direction:column; align-items:center; flex:1;">
+      <div style="width:100%;margin-bottom:16px;"><button class="back-btn" onclick="goScreen('sc-connect')" style="background:transparent;border:1px solid #0d2a0d;color:#2a4a2a;font-family:var(--font);font-size:0.55rem;letter-spacing:0.12em;padding:6px 14px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--g)';this.style.color='var(--g)'" onmouseout="this.style.borderColor='#0d2a0d';this.style.color='#2a4a2a'">← BACK</button></div>
       <div class="otp-step-lbl">STEP 02 · AUTHENTICATE</div>
       <div class="otp-title">VERIFYING YOUR EMAIL</div>
       <div class="otp-phone-show" id="otp-num-show">check your inbox</div>
@@ -1016,6 +1017,7 @@ body::after {
   ════════════════════ -->
   <div class="screen" id="sc-welcome">
     <div style="padding:48px 28px; display:flex; flex-direction:column; align-items:center; flex:1; justify-content:center;">
+      <div style="width:100%;margin-bottom:16px;"><button class="back-btn" onclick="goScreen('sc-otp')" style="background:transparent;border:1px solid #0d2a0d;color:#2a4a2a;font-family:var(--font);font-size:0.55rem;letter-spacing:0.12em;padding:6px 14px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--g)';this.style.color='var(--g)'" onmouseout="this.style.borderColor='#0d2a0d';this.style.color='#2a4a2a'">← BACK</button></div>
       <div class="otp-step-lbl">STEP 03 · TERMS & CONDITIONS</div>
       <div class="otp-title" style="margin-bottom:6px;">WELCOME TO IPNOTEC</div>
       <div class="otp-phone-show" style="margin-bottom:20px;">FREE COWORKING INTERNET · BENGALURU</div>
@@ -1110,224 +1112,6 @@ body::after {
   </div>
 
 </div><!-- /shell -->
-
-<!-- ── ADMIN TRIGGER ── -->
-<button class="admin-trigger" onclick="openAdminLogin()" title="Admin">
-  <span>⚙</span>
-</button>
-
-<!-- ── ADMIN LOGIN OVERLAY ── -->
-<div class="admin-login-overlay" id="admin-login-overlay">
-  <div class="pin-title">ADMIN ACCESS</div>
-  <div class="pin-sub">ENTER CREDENTIALS</div>
-  <div class="admin-login-form">
-    <input class="admin-inp" id="admin-user" type="text" placeholder="USERNAME" autocomplete="off">
-    <input class="admin-inp" id="admin-pass" type="password" placeholder="PASSWORD"
-      onkeydown="if(event.key==='Enter')adminLogin()">
-    <button class="btn-verify" onclick="adminLogin()">LOGIN →</button>
-  </div>
-  <div class="pin-err" id="admin-login-err"></div>
-  <div class="pin-cancel" onclick="closeAdminLogin()">CANCEL</div>
-</div>
-
-<!-- ── ADMIN OVERLAY ── -->
-<div class="admin-overlay" id="admin-overlay">
-
-  <div class="admin-topbar">
-    <div class="at-left">
-      <div class="at-badge"><div class="at-badge-dot"></div>ADMIN</div>
-      <div class="at-title">IPNOTEC<span>_HUB</span></div>
-    </div>
-    <button class="at-close" onclick="closeAdmin()">✕ CLOSE</button>
-  </div>
-
-  <div class="admin-stats">
-    <div class="a-stat">
-      <div class="a-stat-lbl">Live Nodes</div>
-      <div class="a-stat-val g" id="adm-live">7</div>
-      <div class="a-stat-sub">On network now</div>
-    </div>
-    <div class="a-stat">
-      <div class="a-stat-lbl">Data Today</div>
-      <div class="a-stat-val b" id="adm-data">8.4 GB</div>
-      <div class="a-stat-sub">All sessions</div>
-    </div>
-    <div class="a-stat">
-      <div class="a-stat-lbl">Active Sessions</div>
-      <div class="a-stat-val o" id="adm-sessions">7</div>
-      <div class="a-stat-sub">Max 9 colors</div>
-    </div>
-    <div class="a-stat">
-      <div class="a-stat-lbl">Admin Clock</div>
-      <div class="a-stat-val" id="adm-clock" style="font-size:0.85rem;">--:--:--</div>
-      <div class="a-stat-sub">IST · Bengaluru</div>
-    </div>
-  </div>
-
-  <div class="admin-body">
-
-    <!-- 01 LIVE SESSIONS -->
-    <div class="exp">
-      <div class="exp-hdr open" onclick="expToggle(this)">
-        <div class="exp-hdr-left">
-          <div class="exp-arrow">▶</div>
-          <div class="exp-title"><span class="exp-title-num">01 · </span>LIVE SESSIONS</div>
-        </div>
-        <div class="exp-right">
-          <div class="exp-meta" id="exp-live-meta">7 ACTIVE</div>
-          <div class="exp-tag live">● LIVE</div>
-        </div>
-      </div>
-      <div class="exp-body open">
-        <div class="exp-inner" style="overflow-x:auto;">
-          <table class="a-tbl" id="adm-sessions-tbl">
-            <thead>
-              <tr>
-                <th>COLOR</th>
-                <th>PHONE</th>
-                <th>CONNECTED</th>
-                <th>LEFT</th>
-                <th>DATA</th>
-                <th>SESSION</th>
-                <th>ACTION</th>
-              </tr>
-            </thead>
-            <tbody id="adm-sessions-body">
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- 02 NODE CHAT MONITOR -->
-    <div class="exp">
-      <div class="exp-hdr" onclick="expToggle(this)">
-        <div class="exp-hdr-left">
-          <div class="exp-arrow">▶</div>
-          <div class="exp-title"><span class="exp-title-num">02 · </span>NODE CHAT MONITOR</div>
-        </div>
-        <div class="exp-right">
-          <div class="exp-meta" id="exp-chat-meta">0 MESSAGES</div>
-          <div class="exp-tag live">● LIVE</div>
-        </div>
-      </div>
-      <div class="exp-body">
-        <div class="exp-inner">
-          <div class="chat-mon" id="adm-chat-log"></div>
-          <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
-            <div style="font-size:0.45rem;color:#1a3a1a;letter-spacing:0.12em;flex:1;">READ-ONLY · ADMIN CANNOT POST</div>
-            <button class="ta-btn" onclick="clearAdminChat()">CLEAR LOG</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 03 DATA USAGE -->
-    <div class="exp">
-      <div class="exp-hdr" onclick="expToggle(this)">
-        <div class="exp-hdr-left">
-          <div class="exp-arrow">▶</div>
-          <div class="exp-title"><span class="exp-title-num">03 · </span>DATA USAGE PER NODE</div>
-        </div>
-        <div class="exp-right">
-          <div class="exp-meta" id="exp-data-meta">8.4 GB</div>
-          <div class="exp-tag">TODAY</div>
-        </div>
-      </div>
-      <div class="exp-body">
-        <div class="exp-inner">
-          <div id="adm-usage-bars"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 04 NETWORK CONTROLS -->
-    <div class="exp">
-      <div class="exp-hdr" onclick="expToggle(this)">
-        <div class="exp-hdr-left">
-          <div class="exp-arrow">▶</div>
-          <div class="exp-title"><span class="exp-title-num">04 · </span>NETWORK CONTROLS</div>
-        </div>
-        <div class="exp-right">
-          <div class="exp-meta">GLOBAL</div>
-          <div class="exp-tag warn">⚠ ADMIN ONLY</div>
-        </div>
-      </div>
-      <div class="exp-body">
-        <div class="exp-inner">
-          <div class="tog-row">
-            <div class="tog-name">24HR Auto-Disconnect</div>
-            <div class="tog on" onclick="this.classList.toggle('on')"><div class="tog-knob"></div></div>
-          </div>
-          <div class="tog-row">
-            <div class="tog-name">Node Chat Enabled</div>
-            <div class="tog on" onclick="this.classList.toggle('on')"><div class="tog-knob"></div></div>
-          </div>
-          <div class="tog-row">
-            <div class="tog-name">VIBGYOR Color Assign</div>
-            <div class="tog on" onclick="this.classList.toggle('on')"><div class="tog-knob"></div></div>
-          </div>
-          <div class="tog-row">
-            <div class="tog-name">Ping Response Sounds</div>
-            <div class="tog on" onclick="this.classList.toggle('on')"><div class="tog-knob"></div></div>
-          </div>
-          <div class="tog-row">
-            <div class="tog-name">Session Reports On Disconnect</div>
-            <div class="tog on" onclick="this.classList.toggle('on')"><div class="tog-knob"></div></div>
-          </div>
-          <div class="tog-row" style="border-bottom:none;">
-            <div class="tog-name">Bandwidth Limit Per User</div>
-            <div style="font-family:var(--head);font-size:0.6rem;color:var(--g);">10 MBPS</div>
-          </div>
-          <div style="margin-top:14px;">
-            <button class="ta-btn red" style="width:100%;padding:12px;font-size:0.55rem;letter-spacing:0.18em;"
-              onclick="if(confirm('Disconnect ALL users now?'))alert('All users disconnected.')">
-              ⚠ &nbsp; DISCONNECT ALL USERS
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 05 SESSION ARCHIVE -->
-    <div class="exp">
-      <div class="exp-hdr" onclick="expToggle(this)">
-        <div class="exp-hdr-left">
-          <div class="exp-arrow">▶</div>
-          <div class="exp-title"><span class="exp-title-num">05 · </span>SESSION ARCHIVE</div>
-        </div>
-        <div class="exp-right">
-          <div class="exp-meta" id="exp-archive-meta">0 SESSIONS</div>
-          <div class="exp-tag">HISTORY</div>
-        </div>
-      </div>
-      <div class="exp-body">
-        <div class="exp-inner" style="overflow-x:auto;">
-          <table class="a-tbl arc-tbl" id="adm-archive-tbl">
-            <thead>
-              <tr>
-                <th>COLOR</th>
-                <th>PHONE</th>
-                <th>CONNECTED</th>
-                <th>DURATION</th>
-                <th>DATA</th>
-                <th>PINGS</th>
-                <th>END</th>
-              </tr>
-            </thead>
-            <tbody id="adm-archive-body">
-              <tr><td colspan="7" style="color:#1a1a1a;text-align:center;padding:20px;font-size:0.5rem;letter-spacing:0.15em;">NO COMPLETED SESSIONS YET</td></tr>
-            </tbody>
-          </table>
-          <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;">
-            <button class="ta-btn" style="font-size:0.45rem;">EXPORT CSV</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /admin-body -->
-</div><!-- /admin-overlay -->
 
 <script>
 // ══════════════════════════════════════════════
@@ -1479,6 +1263,8 @@ updateClock();
 // ══════════════════════════════════════════════
 let currentScreen = 'sc-connect';
 function goScreen(id) {
+  // Dismiss keyboard before transitioning
+  if (document.activeElement) document.activeElement.blur();
   const from = document.getElementById(currentScreen);
   const to   = document.getElementById(id);
   from.classList.add('out');
@@ -1752,12 +1538,7 @@ function setupConnectedScreen() {
     const slot = Math.min(Math.floor((24*3600 - S.sessionSecs) / (3*3600)), 7);
     S.hourlyData[slot] = (S.hourlyData[slot] || 0) + Math.random() * 12;
   }, 8000);
-  // Update admin live count
-  document.getElementById('adm-live').textContent = networkNodes.length + 1;
-  document.getElementById('adm-sessions').textContent = networkNodes.length + 1;
-  document.getElementById('exp-live-meta').textContent = (networkNodes.length + 1) + ' ACTIVE';
-  renderAdminSessions();
-  renderAdminUsage();
+
   // Simulate nodes joining/leaving every 30-60s
   simulateLiveNodes();
 }
@@ -2096,7 +1877,7 @@ function endSession() {
     pings: S.pingCount,
     end: 'AUTO',
   });
-  renderAdminArchive();
+
 }
 
 function buildReport() {
@@ -2196,141 +1977,11 @@ function simulateLiveNodes() {
       initRadar();
       document.getElementById('radar-count').textContent = (networkNodes.length+1) + ' NODES LIVE';
       document.getElementById('chat-nodes-live').textContent = '● ' + (networkNodes.length+1) + ' LIVE';
-      renderAdminSessions();
-      renderAdminUsage();
-      document.getElementById('adm-live').textContent = networkNodes.length + 1;
+
       loop();
     }, delay);
   }
   loop();
-}
-
-// ══════════════════════════════════════════════
-// ADMIN PANEL
-// ══════════════════════════════════════════════
-let adminToken = null;
-
-function openAdminLogin() {
-  document.getElementById('admin-user').value = '';
-  document.getElementById('admin-pass').value = '';
-  document.getElementById('admin-login-err').textContent = '';
-  document.getElementById('admin-login-overlay').classList.add('open');
-  setTimeout(() => document.getElementById('admin-user').focus(), 100);
-}
-
-function closeAdminLogin() {
-  document.getElementById('admin-login-overlay').classList.remove('open');
-}
-
-async function adminLogin() {
-  const user = document.getElementById('admin-user').value.trim();
-  const pass = document.getElementById('admin-pass').value;
-  const errEl = document.getElementById('admin-login-err');
-  errEl.textContent = '';
-
-  if (!user || !pass) { errEl.textContent = 'ENTER USERNAME AND PASSWORD'; return; }
-
-  try {
-    const data = await apiPost('/admin/login', { username: user, password: pass });
-    if (!data.success) {
-      errEl.textContent = data.message || '✗ LOGIN FAILED';
-      playTone(200, 0.2, 'sawtooth', 0.08);
-      return;
-    }
-    adminToken = data.token;
-    closeAdminLogin();
-    playAdminOpen();
-    renderAdminSessions();
-    renderAdminUsage();
-    renderAdminArchive();
-    document.getElementById('admin-overlay').classList.add('open');
-  } catch(e) {
-    errEl.textContent = 'NETWORK ERROR';
-  }
-}
-function closeAdmin() {
-  document.getElementById('admin-overlay').classList.remove('open');
-}
-
-function expToggle(hdr) {
-  hdr.classList.toggle('open');
-  hdr.nextElementSibling.classList.toggle('open');
-}
-
-function renderAdminSessions() {
-  const body = document.getElementById('adm-sessions-body');
-  if (!body) return;
-  const allNodes = S.color ? [...networkNodes, { key: S.color.key, name: S.color.name, hex: S.color.hex, connTime: S.connectedAt ? S.connectedAt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) : '--', timeLeft: S.sessionSecs, data: Math.round(S.dataUsed), msgs: S.msgCount, isYou: true }] : networkNodes;
-  body.innerHTML = allNodes.map(n => {
-    const h = Math.floor(n.timeLeft / 3600);
-    const m = String(Math.floor((n.timeLeft % 3600)/60)).padStart(2,'0');
-    const leftStr = h + ':' + m;
-    const pct = Math.round(((24*3600 - n.timeLeft) / (24*3600)) * 100);
-    const isWarn = n.timeLeft < 3*3600;
-    return `<tr>
-      <td><span class="tsq" style="background:${n.hex};box-shadow:0 0 5px ${n.hex};"></span><span style="color:${n.hex};">${n.name}</span></td>
-      <td class="w">${n.isYou ? '+91 '+S.phone.slice(0,6)+'••' : '98••••'+Math.floor(Math.random()*9000+1000)}</td>
-      <td class="w">${n.connTime}</td>
-      <td class="${isWarn?'o':'g'}">${leftStr}${isWarn?' ⚠':''}</td>
-      <td>${n.data} MB</td>
-      <td><span class="prog-track"><span class="prog-fill" style="width:${pct}%;background:${n.hex};"></span></span></td>
-      <td><button class="ta-btn red" onclick="alert('User ${n.name} kicked.')">KICK</button></td>
-    </tr>`;
-  }).join('');
-  document.getElementById('exp-live-meta').textContent = allNodes.length + ' ACTIVE';
-  document.getElementById('adm-sessions').textContent = allNodes.length;
-  document.getElementById('adm-live').textContent = allNodes.length;
-}
-
-function renderAdminUsage() {
-  const wrap = document.getElementById('adm-usage-bars');
-  if (!wrap) return;
-  const allNodes = S.color ? [...networkNodes, { key: S.color.key, name: S.color.name, hex: S.color.hex, data: Math.round(S.dataUsed) }] : networkNodes;
-  const maxData = Math.max(...allNodes.map(n => n.data), 1);
-  let totalMB = allNodes.reduce((a,n) => a + (n.data||0), 0);
-  let totalStr = totalMB < 1024 ? totalMB + ' MB' : (totalMB/1024).toFixed(1) + ' GB';
-  wrap.innerHTML = allNodes.map(n => `
-    <div class="ub-row">
-      <div class="ub-who"><div style="width:8px;height:8px;background:${n.hex};flex-shrink:0;"></div><span style="color:${n.hex};">${n.name}</span></div>
-      <div class="ub-track"><div class="ub-fill" style="width:${Math.round((n.data/maxData)*100)}%;background:${n.hex};"></div></div>
-      <div class="ub-val" style="color:${n.hex};">${n.data} MB</div>
-    </div>
-  `).join('') + `<div style="margin-top:8px;padding-top:8px;border-top:1px solid #0a0a0a;display:flex;justify-content:space-between;">
-    <span style="font-size:0.45rem;color:#2a2a2a;letter-spacing:0.12em;">TOTAL: ${totalStr}</span>
-    <span style="font-size:0.45rem;color:#2a2a2a;letter-spacing:0.12em;">BW: 100 MBPS</span>
-  </div>`;
-  document.getElementById('exp-data-meta').textContent = totalStr;
-  document.getElementById('adm-data').textContent = totalStr;
-}
-
-function renderAdminArchive() {
-  const body = document.getElementById('adm-archive-body');
-  const meta = document.getElementById('exp-archive-meta');
-  if (!body) return;
-  if (archiveSessions.length === 0) {
-    body.innerHTML = '<tr><td colspan="7" style="color:#1a1a1a;text-align:center;padding:20px;font-size:0.5rem;letter-spacing:0.15em;">NO COMPLETED SESSIONS YET</td></tr>';
-    if (meta) meta.textContent = '0 SESSIONS';
-    return;
-  }
-  body.innerHTML = archiveSessions.map(s => {
-    const ct = s.connectedAt ? s.connectedAt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) : '--';
-    return `<tr>
-      <td><span class="tsq" style="background:${s.color.hex};box-shadow:0 0 4px ${s.color.hex};"></span><span style="color:${s.color.hex};">${s.color.name}</span></td>
-      <td>98••••${s.phone.slice(-4)}</td>
-      <td>${ct}</td>
-      <td>24:00:00</td>
-      <td>${s.data}</td>
-      <td>${s.pings}</td>
-      <td style="color:var(--g);">${s.end}</td>
-    </tr>`;
-  }).join('');
-  if (meta) meta.textContent = archiveSessions.length + ' SESSIONS';
-}
-
-function clearAdminChat() {
-  document.getElementById('adm-chat-log').innerHTML = '';
-  allChatMessages = [];
-  document.getElementById('exp-chat-meta').textContent = '0 MESSAGES';
 }
 
 // ══════════════════════════════════════════════
