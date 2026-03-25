@@ -7,7 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#000000">
 <title>IPNOTEC · Free Internet</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"></noscript>
 <style>
 /* ═══════════════════════════════════════
    RESET & ROOT
@@ -2329,6 +2331,19 @@ function clearAdminChat() {
   document.getElementById('adm-chat-log').innerHTML = '';
   allChatMessages = [];
   document.getElementById('exp-chat-meta').textContent = '0 MESSAGES';
+}
+
+// ══════════════════════════════════════════════
+// AUTO-REAUTH (returning client with active session)
+// ══════════════════════════════════════════════
+if (PORTAL.autoReauth) {
+  const taken = networkNodes.map(n => n.key);
+  const avail = VIBGYOR.filter(v => !taken.includes(v.key));
+  S.color = avail[Math.floor(Math.random() * avail.length)] || VIBGYOR[3];
+  playConnected();
+  setupConnectedScreen();
+  goScreen('sc-connected');
+  startSession();
 }
 </script>
 

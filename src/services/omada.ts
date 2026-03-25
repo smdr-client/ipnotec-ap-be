@@ -121,10 +121,19 @@ class OmadaClient {
         }
     }
 
+    /** Common headers for authenticated requests */
+    private authHeaders(): Record<string, string> {
+        return {
+            'Content-Type': 'application/json',
+            'Csrf-Token': this.csrfToken,
+            'Cookie': this.sessionCookie,
+        };
+    }
+
     /**
-     * Authorize a WiFi client via the external portal auth endpoint.
-     *
-     * POST /{omadacId}/api/v2/hotspot/extPortal/auth
+     * Authorize a WiFi client via two Omada API calls:
+     *  1. extPortal/auth — registers the external portal authorization
+     *  2. cmd/clients/{mac}/auth — pushes the auth to the EAP so traffic is actually allowed
      *
      * @param clientMac  — client device MAC (e.g. "AA-BB-CC-DD-EE-FF")
      * @param apMac      — access point MAC
@@ -141,34 +150,13 @@ class OmadaClient {
     ): Promise<{ success: boolean; errorCode: number; data?: unknown }> {
         await this.ensureSession();
 
-        // CRITICAL: token must be in BOTH the URL param AND the header
-        const url = `${this.host}/${this.omadacId}/api/v2/hotspot/extPortal/auth?token=${encodeURIComponent(this.csrfToken)}`;
-
         try {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Csrf-Token': this.csrfToken,
-                    'Cookie': this.sessionCookie,
-                },
-                body: JSON.stringify({
-                    clientMac,
-                    apMac,
-                    ssid,
-                    radioId,
-                    time: minutes,
-                    authType: 4,
-                }),
-                // @ts-expect-error — Bun-specific TLS option
-                tls: { rejectUnauthorized: false },
-            });
-
-            // Check if we got HTML back (means session expired / token invalid)
-            const contentType = res.headers.get('content-type') || '';
-            if (contentType.includes('text/html')) {
+            // Step 1: External portal auth (registers the authorization in controller)
+            const extResult = await this.callExtPortalAuth(clientMac, apMac, ssid, radioId, minutes);
+            if (!extResult.success) {
+                // On failure, try re-login once
                 if (!this.retrying) {
-                    console.warn('[Omada] Got HTML response — session expired, re-authenticating...');
+                    console.warn(`[Omada] extPortal/auth failed (errorCode=${extResult.errorCode}), retrying...`);
                     this.retrying = true;
                     this.csrfToken = '';
                     this.sessionCookie = '';
@@ -177,19 +165,22 @@ class OmadaClient {
                     return result;
                 }
                 this.retrying = false;
-                return { success: false, errorCode: -1, data: 'Re-authentication failed' };
+                return extResult;
             }
 
-            const data = await res.json() as { errorCode: number; msg?: string; result?: unknown };
-
-            if (data.errorCode === 0) {
-                console.log(`[Omada] Client authorized: ${clientMac} for ${minutes} min`);
-                return { success: true, errorCode: 0, data: data.result };
+            // Step 2: Push authorization to the EAP (actually allows traffic)
+            const cmdResult = await this.callCmdClientAuth(clientMac);
+            if (!cmdResult.success) {
+                console.warn(`[Omada] cmd/clients auth failed but extPortal succeeded — client may still get access`);
             }
 
-            // Non-zero error — try re-login once
+            console.log(`[Omada] Client authorized: ${clientMac} for ${minutes} min`);
+            return { success: true, errorCode: 0, data: extResult.data };
+        } catch (err) {
+            console.error('[Omada] Network error during auth:', err);
+
+            // Try re-login once on network errors
             if (!this.retrying) {
-                console.warn(`[Omada] Auth failed (errorCode=${data.errorCode}), retrying...`);
                 this.retrying = true;
                 this.csrfToken = '';
                 this.sessionCookie = '';
@@ -199,13 +190,62 @@ class OmadaClient {
             }
 
             this.retrying = false;
-            console.error(`[Omada] Auth failed after retry: ${data.msg || JSON.stringify(data)}`);
-            return { success: false, errorCode: data.errorCode, data };
-        } catch (err) {
-            console.error('[Omada] Network error during auth:', err);
             return { success: false, errorCode: -1, data: String(err) };
         }
     }
+
+    /** Call the extPortal/auth endpoint (registers authorization in controller) */
+    private async callExtPortalAuth(
+        clientMac: string, apMac: string, ssid: string, radioId: number, minutes: number
+    ): Promise<{ success: boolean; errorCode: number; data?: unknown }> {
+        const url = `${this.host}/${this.omadacId}/api/v2/hotspot/extPortal/auth?token=${encodeURIComponent(this.csrfToken)}`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: this.authHeaders(),
+            body: JSON.stringify({
+                clientMac,
+                apMac,
+                ssidName: ssid.toLowerCase(),
+                radioId,
+                time: minutes,
+                authType: 4,
+            }),
+            // @ts-expect-error — Bun-specific TLS option
+            tls: { rejectUnauthorized: false },
+        });
+
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('text/html')) {
+            return { success: false, errorCode: -1, data: 'Got HTML (session expired)' };
+        }
+
+        const data = await res.json() as { errorCode: number; msg?: string; result?: unknown };
+        return { success: data.errorCode === 0, errorCode: data.errorCode, data: data.result };
+    }
+
+    /** Call cmd/clients/{mac}/auth — pushes authorization to the EAP to allow traffic */
+    private async callCmdClientAuth(clientMac: string): Promise<{ success: boolean; errorCode: number }> {
+        const url = `${this.host}/${this.omadacId}/api/v2/sites/${this.siteId}/cmd/clients/${clientMac}/auth?token=${encodeURIComponent(this.csrfToken)}`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: this.authHeaders(),
+            body: JSON.stringify({}),
+            // @ts-expect-error — Bun-specific TLS option
+            tls: { rejectUnauthorized: false },
+        });
+
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('text/html')) {
+            return { success: false, errorCode: -1 };
+        }
+
+        const data = await res.json() as { errorCode: number };
+        if (data.errorCode === 0) {
+            console.log(`[Omada] EAP auth pushed for ${clientMac}`);
+        }
+        return { success: data.errorCode === 0, errorCode: data.errorCode };
+    }
+
     /**
      * Check Omada connectivity and return diagnostic info.
      * Used by the /health/omada endpoint.

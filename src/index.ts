@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { logger } from 'hono/logger';
 import { serveStatic } from 'hono/bun';
 import portal from './routes/portal';
 import admin from './routes/admin';
@@ -7,11 +8,15 @@ import { omada } from './services/omada';
 
 const app = new Hono();
 
+app.use('/*', logger());
 app.use('/*', cors());
 app.use('/static/*', serveStatic({ root: './' }));
 
-// Routes
-app.get('/', (c) => c.redirect('/portal'));
+// Routes — preserve query params from Omada redirect (/?clientMac=...&ssidName=...)
+app.get('/', (c) => {
+    const qs = new URL(c.req.url).search;
+    return c.redirect(`/portal${qs}`);
+});
 app.route('/portal', portal);
 app.route('/admin', admin);
 

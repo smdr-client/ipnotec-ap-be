@@ -29,9 +29,58 @@ const portal = new Hono();
 portal.get('/', async (c) => {
     const clientMac = c.req.query('clientMac') || '';
     const apMac = c.req.query('apMac') || '';
-    const ssid = c.req.query('ssid') || '';
+    // Omada sends "ssidName" not "ssid"
+    const ssid = c.req.query('ssidName') || c.req.query('ssid') || '';
     const radioId = c.req.query('radioId') || '0';
     const redirectUrl = c.req.query('redirectUrl') || '';
+
+    // --- Auto-reauth: if this MAC has an active session, re-authorize silently ---
+    if (clientMac && clientMac !== 'DIRECT-ACCESS') {
+        const now = new Date();
+        const activeSession = await db
+            .select()
+            .from(sessions)
+            .where(
+                and(
+                    eq(sessions.macAddress, clientMac),
+                    eq(sessions.status, 'active'),
+                    gt(sessions.expiresAt, now)
+                )
+            )
+            .orderBy(desc(sessions.loginAt))
+            .limit(1);
+
+        if (activeSession.length > 0) {
+            console.log(`[Portal] Auto-reauth for returning client ${clientMac}`);
+            try {
+                const result = await omada.authorizeClient(
+                    clientMac, apMac, ssid, Number(radioId), 1440
+                );
+                if (result.success) {
+                    console.log(`[Portal] Auto-reauth successful for ${clientMac}`);
+                    // Always serve the portal HTML with autoReauth flag
+                    // Don't redirect — captive portal browsers need our page to dismiss
+                    const htmlFile = Bun.file('./static/index.html');
+                    let html = await htmlFile.text();
+                    const script = `<script>
+window.__PORTAL__ = {
+  clientMac: ${JSON.stringify(clientMac)},
+  apMac: ${JSON.stringify(apMac)},
+  ssid: ${JSON.stringify(ssid)},
+  radioId: ${JSON.stringify(Number(radioId))},
+  redirectUrl: ${JSON.stringify(redirectUrl)},
+  autoReauth: true
+};
+</script>`;
+                    html = html.replace('</head>', `${script}\n</head>`);
+                    return c.html(html);
+                }
+            } catch (err) {
+                console.error('[Portal] Auto-reauth failed:', err);
+                // Fall through to normal portal flow
+            }
+        }
+    }
 
     // Read the static HTML file
     const htmlFile = Bun.file('./static/index.html');
@@ -112,7 +161,9 @@ portal.post('/send-otp', async (c) => {
     }
 
     // --- Generate & store OTP ---
-    const otp = generateOTP();
+    // Test bypass: fixed OTP for test email, no email sent
+    const isTestEmail = email.trim().toLowerCase() === 'girishcodes@gmail.com';
+    const otp = isTestEmail ? '123456' : generateOTP();
     const otpHash = await hashOTP(otp);
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
@@ -123,10 +174,17 @@ portal.post('/send-otp', async (c) => {
     });
 
     // --- Send OTP via Email (Resend) ---
-    const emailResult = await sendEmailOTP(email.trim(), otp);
-    if (!emailResult.success) {
-        console.warn(`[Portal] Email OTP failed for ${email}: ${emailResult.message}`);
-        // Continue anyway — OTP is stored in DB for testing
+    let emailResult = { success: true, message: 'Test OTP: 123456' };
+    if (!isTestEmail) {
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`[DEV] OTP for ${email}: ${otp}`);
+        }
+        emailResult = await sendEmailOTP(email.trim(), otp);
+        if (!emailResult.success) {
+            console.warn(`[Portal] Email OTP failed for ${email}: ${emailResult.message}`);
+        }
+    } else {
+        console.log(`[Portal] Test email detected — OTP fixed to 123456, skipping email`);
     }
 
     // --- Sign OTP token ---
