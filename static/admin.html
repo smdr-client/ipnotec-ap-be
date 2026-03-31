@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPNOTEC · Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#000; --panel:#0a0a0a; --b2:#111; --b3:#1a1a1a;
+  --g:#39FF14; --r:#FF2244; --y:#FFE600; --b:#00C8FF; --v:#BF00FF; --o:#FF6200;
+  --w:#fff; --gr:#888; --dim:#0d2a0d;
+  --font:'Space Mono',monospace; --head:'Orbitron',sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg);color:var(--w);font-family:var(--font);min-height:100vh}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.06) 3px,rgba(0,0,0,0.06) 4px)}
+
+/* LOGIN */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login-box{background:var(--panel);border:1px solid #1a1a1a;border-radius:12px;padding:40px 32px;width:360px;text-align:center}
+.login-box h1{font-family:var(--head);font-size:1.1rem;letter-spacing:.2em;color:var(--g);text-shadow:0 0 12px var(--g);margin-bottom:8px}
+.login-box p{color:var(--gr);font-size:.75rem;margin-bottom:28px}
+.login-box input{width:100%;padding:12px 14px;background:#050505;border:1px solid #222;border-radius:8px;color:var(--w);font-family:var(--font);font-size:.85rem;margin-bottom:14px;outline:none;transition:border .2s}
+.login-box input:focus{border-color:var(--g)}
+.login-box button{width:100%;padding:13px;background:var(--g);color:#000;font-family:var(--head);font-weight:700;font-size:.85rem;letter-spacing:.15em;border:none;border-radius:8px;cursor:pointer;transition:.2s}
+.login-box button:hover{box-shadow:0 0 20px var(--g)}
+.login-err{color:var(--r);font-size:.72rem;margin-top:10px;min-height:18px}
+
+/* DASHBOARD */
+.dashboard{display:none}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(0,0,0,.92);backdrop-filter:blur(10px);border-bottom:1px solid #111;display:flex;align-items:center;justify-content:space-between;padding:14px 24px}
+.topbar-brand{font-family:var(--head);font-size:.9rem;color:var(--g);letter-spacing:.18em;text-shadow:0 0 10px var(--g)}
+.topbar-right{display:flex;gap:12px;align-items:center}
+.health-dot{width:8px;height:8px;border-radius:50%;background:var(--gr)}.health-dot.ok{background:var(--g);box-shadow:0 0 6px var(--g)}.health-dot.fail{background:var(--r);box-shadow:0 0 6px var(--r)}
+.btn-sm{padding:6px 14px;font-family:var(--font);font-size:.7rem;border:1px solid #333;border-radius:6px;background:transparent;color:var(--gr);cursor:pointer;transition:.2s}
+.btn-sm:hover{border-color:var(--g);color:var(--g)}.btn-sm.danger:hover{border-color:var(--r);color:var(--r)}
+.container{max-width:1200px;margin:0 auto;padding:24px}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:var(--panel);border:1px solid #1a1a1a;border-radius:10px;padding:18px}
+.stat-card .label{font-size:.6rem;color:var(--gr);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.stat-card .value{font-family:var(--head);font-size:1.6rem;color:var(--g);text-shadow:0 0 8px var(--g)}
+.stat-card .sub{font-size:.6rem;color:var(--gr);margin-top:3px}
+
+/* DEVICES ROW */
+.devices-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:24px}
+.device-card{background:var(--panel);border:1px solid #1a1a1a;border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px}
+.device-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.device-icon.ap{background:rgba(57,255,20,.1);color:var(--g)}.device-icon.switch{background:rgba(0,200,255,.1);color:var(--b)}.device-icon.gateway{background:rgba(191,0,255,.1);color:var(--v)}.device-icon.offline{background:rgba(255,34,68,.1);color:var(--r)}
+.device-info{flex:1;min-width:0}.device-info .name{font-size:.72rem;font-weight:700;color:var(--w);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.device-info .meta{font-size:.58rem;color:var(--gr);margin-top:2px}
+.device-status{font-size:.52rem;padding:3px 8px;border-radius:4px;font-weight:700;letter-spacing:.05em}.device-status.online{background:rgba(57,255,20,.12);color:var(--g)}.device-status.offline{background:rgba(255,34,68,.12);color:var(--r)}
+
+/* SETTINGS PANEL */
+.settings-panel{background:var(--panel);border:1px solid #1a1a1a;border-radius:10px;padding:20px;margin-bottom:24px;display:none}
+.settings-panel h3{font-family:var(--head);font-size:.72rem;color:var(--g);letter-spacing:.12em;margin-bottom:14px}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.setting-item label{display:block;font-size:.6rem;color:var(--gr);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.setting-item input{width:100%;padding:8px 10px;background:#050505;border:1px solid #222;border-radius:6px;color:var(--w);font-family:var(--font);font-size:.75rem;outline:none}
+.setting-item input:focus{border-color:var(--g)}
+.setting-item .hint{font-size:.55rem;color:#555;margin-top:3px}
+.settings-actions{margin-top:16px;display:flex;gap:10px}
+
+/* CHART */
+.chart-section{background:var(--panel);border:1px solid #1a1a1a;border-radius:10px;padding:18px;margin-bottom:24px}
+.chart-section h3{font-family:var(--head);font-size:.72rem;color:var(--g);letter-spacing:.12em;margin-bottom:14px}
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:120px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end}
+.bar{width:100%;min-height:2px;background:linear-gradient(180deg,var(--g),#0a3a0a);border-radius:4px 4px 0 0;transition:height .5s;box-shadow:0 0 6px rgba(57,255,20,.15)}
+.bar-label{font-size:.5rem;color:var(--gr);white-space:nowrap}.bar-value{font-size:.55rem;color:var(--g);font-weight:700}
+
+/* TABS */
+.tabs{display:flex;gap:0;margin-bottom:18px;border-bottom:1px solid #1a1a1a}
+.tab{padding:10px 18px;font-family:var(--font);font-size:.7rem;color:var(--gr);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:.2s;letter-spacing:.05em}
+.tab:hover{color:var(--w)}.tab.active{color:var(--g);border-bottom-color:var(--g)}
+
+/* SEARCH */
+.search-bar{display:flex;gap:10px;margin-bottom:16px;align-items:center}
+.search-bar input{flex:1;max-width:380px;padding:10px 14px;background:#050505;border:1px solid #222;border-radius:8px;color:var(--w);font-family:var(--font);font-size:.8rem;outline:none;transition:border .2s}
+.search-bar input:focus{border-color:var(--g);box-shadow:0 0 8px rgba(57,255,20,.1)}
+.search-bar input::placeholder{color:#444}
+.search-hint{font-size:.58rem;color:var(--gr)}
+
+/* TABLE */
+.table-wrap{background:var(--panel);border:1px solid #1a1a1a;border-radius:10px;overflow:hidden}
+.table-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #111}
+.table-header h3{font-family:var(--head);font-size:.72rem;color:var(--g);letter-spacing:.12em}.table-header .count{font-size:.68rem;color:var(--gr)}
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;padding:8px 12px;font-size:.58rem;color:var(--gr);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #111;position:sticky;top:0;background:var(--panel)}
+tbody tr{border-bottom:1px solid #0a0a0a;transition:background .15s}tbody tr:hover{background:#0a0f0a}
+tbody td{padding:8px 12px;font-size:.68rem;color:#ccc;white-space:nowrap}
+.mac{font-size:.62rem;color:var(--b);font-family:var(--font)}
+.status{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.58rem;font-weight:700;letter-spacing:.05em}
+.status.active{background:rgba(57,255,20,.12);color:var(--g)}.status.expired{background:rgba(136,136,136,.12);color:var(--gr)}.status.revoked{background:rgba(255,34,68,.12);color:var(--r)}
+.action-btn{padding:4px 10px;font-size:.58rem;font-family:var(--font);background:transparent;border:1px solid #333;color:var(--gr);border-radius:4px;cursor:pointer;transition:.2s;margin-right:4px}
+.action-btn:hover{border-color:var(--g);color:var(--g)}.action-btn.danger:hover{border-color:var(--r);color:var(--r)}.action-btn:disabled{opacity:.3;cursor:not-allowed}
+.empty-state{padding:36px;text-align:center;color:var(--gr);font-size:.72rem}
+
+/* SCROLL */
+.table-scroll{max-height:520px;overflow-y:auto}.table-scroll::-webkit-scrollbar{width:4px}.table-scroll::-webkit-scrollbar-track{background:var(--panel)}.table-scroll::-webkit-scrollbar-thumb{background:#222;border-radius:4px}
+
+/* USER CARD (expandable) */
+.user-list{display:flex;flex-direction:column;gap:10px}
+.user-card{background:var(--panel);border:1px solid #1a1a1a;border-radius:10px;overflow:hidden;transition:border-color .2s}
+.user-card.expanded{border-color:#1f3a1f}
+.user-card-header{display:flex;align-items:center;padding:14px 16px;gap:14px;cursor:pointer;transition:background .15s}
+.user-card-header:hover{background:#0a0f0a}
+.user-avatar{width:38px;height:38px;border-radius:10px;background:rgba(57,255,20,.08);display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:.8rem;color:var(--g);font-weight:700;flex-shrink:0}
+.user-main{flex:1;min-width:0}
+.user-name{font-size:.78rem;font-weight:700;color:var(--w)}
+.user-phone{font-size:.72rem;color:var(--g);font-family:var(--font);margin-top:1px}
+.user-email{font-size:.62rem;color:var(--gr);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-badges{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.badge{font-size:.55rem;padding:3px 8px;border-radius:4px;font-weight:700;letter-spacing:.03em}
+.badge.sessions{background:rgba(57,255,20,.1);color:var(--g)}
+.badge.devices{background:rgba(0,200,255,.1);color:var(--b)}
+.badge.connected{background:rgba(57,255,20,.2);color:var(--g);animation:pulse 2s infinite}
+.chevron{color:var(--gr);font-size:.8rem;transition:transform .2s;flex-shrink:0;margin-left:8px}
+.user-card.expanded .chevron{transform:rotate(90deg);color:var(--g)}
+
+/* DEVICE ROWS (nested under user) */
+.user-devices{display:none;border-top:1px solid #111;background:#050505}
+.user-card.expanded .user-devices{display:block}
+.device-row{display:flex;align-items:center;padding:10px 16px 10px 68px;gap:14px;border-bottom:1px solid #0a0a0a;transition:background .15s}
+.device-row:last-child{border-bottom:none}
+.device-row:hover{background:#0a0d0a}
+.device-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}.device-dot.on{background:var(--g);box-shadow:0 0 6px var(--g)}.device-dot.off{background:#333}
+.device-mac{font-size:.68rem;color:var(--b);font-family:var(--font);min-width:130px}
+.device-detail{font-size:.62rem;color:#aaa}
+.device-detail span{margin-right:12px}
+.device-detail .lbl{color:var(--gr);font-size:.55rem;text-transform:uppercase;letter-spacing:.04em;margin-right:2px}
+.device-stats{display:flex;gap:14px;margin-left:auto;align-items:center;flex-shrink:0}
+.device-stats .ds{font-size:.58rem;color:var(--gr)}.device-stats .ds b{color:var(--w)}
+.device-actions{display:flex;gap:4px;flex-shrink:0;margin-left:8px}
+
+/* SIGNAL */
+.signal{display:flex;align-items:flex-end;gap:1px;height:14px}
+.signal-bar{width:3px;border-radius:1px;background:#333}.signal-bar.on{background:var(--g)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 24px;border-radius:8px;font-size:.72rem;font-family:var(--font);z-index:10000;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}.toast.success{background:rgba(57,255,20,.15);border:1px solid var(--g);color:var(--g)}.toast.error{background:rgba(255,34,68,.15);border:1px solid var(--r);color:var(--r)}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+@media(max-width:768px){.container{padding:14px}.stats-row{grid-template-columns:1fr 1fr}.devices-row{grid-template-columns:1fr!important}.device-row{padding-left:16px;flex-wrap:wrap}.device-stats{margin-left:0;margin-top:6px}.user-badges{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginScreen">
+  <div class="login-box">
+    <h1>IPNOTEC</h1>
+    <p>Admin Dashboard</p>
+    <input type="text" id="loginUser" placeholder="Username" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
+    <button onclick="doLogin()">AUTHENTICATE</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+  <div class="topbar">
+    <div class="topbar-brand">IPNOTEC ADMIN</div>
+    <div class="topbar-right">
+      <span title="Backend health" class="health-dot" id="healthDot"></span>
+      <button class="btn-sm" onclick="toggleSettings()">&#9881; SETTINGS</button>
+      <button class="btn-sm" onclick="refreshAll()">&#8635; REFRESH</button>
+      <button class="btn-sm danger" onclick="doLogout()">LOGOUT</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">Today's Sessions</div><div class="value" id="statToday">—</div><div class="sub" id="statTodayDate"></div></div>
+      <div class="stat-card"><div class="label">This Week</div><div class="value" id="statWeek">—</div><div class="sub">Last 7 days</div></div>
+      <div class="stat-card"><div class="label">Registered Users</div><div class="value" id="statUsers">—</div><div class="sub">By phone number</div></div>
+      <div class="stat-card"><div class="label">WiFi Clients</div><div class="value" id="statClients">—</div><div class="sub">Connected now</div></div>
+      <div class="stat-card"><div class="label">Devices (Infra)</div><div class="value" id="statDevices">—</div><div class="sub">APs / Switches</div></div>
+    </div>
+
+    <!-- Settings -->
+    <div class="settings-panel" id="settingsPanel">
+      <h3>SESSION SETTINGS</h3>
+      <div class="settings-grid">
+        <div class="setting-item">
+          <label>Session Cutoff Time (24h)</label>
+          <input type="time" id="setCutoff" placeholder="HH:MM">
+          <div class="hint">All sessions expire at this time daily. Leave empty for fixed duration.</div>
+        </div>
+        <div class="setting-item">
+          <label>Fixed Duration (minutes)</label>
+          <input type="number" id="setDuration" placeholder="1440" min="1">
+          <div class="hint">Used when cutoff time is empty. Default: 1440 (24h)</div>
+        </div>
+        <div class="setting-item">
+          <label>Omada Auth Duration (minutes)</label>
+          <input type="number" id="setOmada" placeholder="1440" min="1">
+          <div class="hint">Auto-calculated from cutoff if set. Otherwise this value.</div>
+        </div>
+      </div>
+      <div class="settings-actions">
+        <button class="btn-sm" onclick="saveSettings()" style="border-color:var(--g);color:var(--g)">SAVE SETTINGS</button>
+        <button class="btn-sm" onclick="toggleSettings()">CLOSE</button>
+      </div>
+    </div>
+
+    <!-- Infrastructure Devices -->
+    <div class="devices-row" id="devicesRow"></div>
+
+    <!-- Chart -->
+    <div class="chart-section">
+      <h3>SESSIONS · LAST 7 DAYS</h3>
+      <div class="bar-chart" id="barChart"></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="users" onclick="switchTab('users')">Users &amp; Devices</button>
+      <button class="tab" data-tab="sessions" onclick="switchTab('sessions')">Sessions</button>
+    </div>
+
+    <!-- Users & Devices Panel -->
+    <div id="usersPanel">
+      <div class="search-bar">
+        <input type="text" id="phoneSearch" placeholder="Search by phone number..." oninput="onSearchChange()">
+        <span class="search-hint">Phone number is the unique ID — devices are nested per user</span>
+      </div>
+      <div class="user-list" id="userList">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Sessions Panel -->
+    <div id="sessionsPanel" style="display:none">
+      <div class="table-wrap">
+        <div class="table-header"><h3>TODAY'S SESSIONS</h3><span class="count" id="tableCount"></span></div>
+        <div class="table-scroll">
+          <table><thead><tr><th>User</th><th>Phone</th><th>MAC</th><th>SSID</th><th>Login</th><th>Expires</th><th>Status</th><th></th></tr></thead>
+            <tbody id="sessionsBody"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = window.location.origin;
+let token = localStorage.getItem('admin_token') || '';
+let currentTab = 'users';
+let allUsersData = [];
+let todaySessions = [];
+let omadaDevices = [];
+let searchTimeout = null;
+
+// ── AUTH ──
+async function doLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginErr');
+  err.textContent = '';
+  if (!user || !pass) { err.textContent = 'Enter username and password'; return; }
+  try {
+    const res = await fetch(API + '/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:user,password:pass}) });
+    const data = await res.json();
+    if (!data.success) { err.textContent = data.message||'Login failed'; return; }
+    token = data.token;
+    localStorage.setItem('admin_token', token);
+    showDashboard();
+  } catch(e) { err.textContent = 'Connection error'; }
+}
+function doLogout() { token=''; localStorage.removeItem('admin_token'); document.getElementById('dashboard').style.display='none'; document.getElementById('loginScreen').style.display='flex'; }
+function showDashboard() { document.getElementById('loginScreen').style.display='none'; document.getElementById('dashboard').style.display='block'; refreshAll(); }
+
+// ── API helpers ──
+async function apiFetch(path) {
+  const res = await fetch(API + path, { headers:{'Authorization':'Bearer ' + token} });
+  if (res.status===401||res.status===403) { doLogout(); toast('Session expired','error'); return null; }
+  return res.json();
+}
+async function apiDelete(path) {
+  const res = await fetch(API + path, { method:'DELETE', headers:{'Authorization':'Bearer ' + token} });
+  if (res.status===401||res.status===403) { doLogout(); toast('Session expired','error'); return null; }
+  return res.json();
+}
+async function apiPost(path, body) {
+  const res = await fetch(API + path, { method:'POST', headers:{'Authorization':'Bearer ' + token, 'Content-Type':'application/json'}, body:JSON.stringify(body||{}) });
+  if (res.status===401||res.status===403) { doLogout(); toast('Session expired','error'); return null; }
+  return res.json();
+}
+async function apiPut(path, body) {
+  const res = await fetch(API + path, { method:'PUT', headers:{'Authorization':'Bearer ' + token, 'Content-Type':'application/json'}, body:JSON.stringify(body||{}) });
+  if (res.status===401||res.status===403) { doLogout(); toast('Session expired','error'); return null; }
+  return res.json();
+}
+
+// ── REFRESH ──
+async function refreshAll() {
+  checkHealth();
+  await Promise.all([loadUsers(''), loadToday(), loadStats(), loadInfraDevices(), loadSettings()]);
+}
+async function checkHealth() {
+  const dot = document.getElementById('healthDot');
+  try { const res = await fetch(API + '/health'); dot.className = res.ok ? 'health-dot ok':'health-dot fail'; } catch { dot.className='health-dot fail'; }
+}
+
+// ── USERS (phone-centric) ──
+async function loadUsers(query) {
+  const q = query !== undefined ? query : (document.getElementById('phoneSearch').value.trim());
+  const path = q ? '/users?q=' + encodeURIComponent(q) : '/users';
+  const data = await apiFetch(path);
+  if (!data) return;
+  allUsersData = data.users || [];
+  document.getElementById('statUsers').textContent = allUsersData.length;
+
+  // Count connected WiFi clients
+  let connectedCount = 0;
+  for (const u of allUsersData) {
+    for (const d of u.devices || []) {
+      if (d.connected) connectedCount++;
+    }
+  }
+  document.getElementById('statClients').textContent = connectedCount;
+
+  renderUsers();
+}
+function onSearchChange() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    loadUsers(document.getElementById('phoneSearch').value.trim());
+  }, 300);
+}
+
+// ── SESSIONS ──
+async function loadToday() {
+  const data = await apiFetch('/sessions/today');
+  if (!data) return;
+  todaySessions = data.sessions || [];
+  document.getElementById('statToday').textContent = data.count;
+  document.getElementById('statTodayDate').textContent = data.date;
+  if (currentTab === 'sessions') renderSessions();
+}
+async function loadStats() {
+  const data = await apiFetch('/sessions/stats');
+  if (!data) return;
+  const daily = data.daily || [];
+  document.getElementById('statWeek').textContent = daily.reduce(function(s,d){return s+d.count},0);
+  renderChart(daily);
+}
+
+// ── INFRA DEVICES ──
+async function loadInfraDevices() {
+  try {
+    const data = await apiFetch('/omada/devices');
+    if (!data) return;
+    omadaDevices = data.devices || [];
+    document.getElementById('statDevices').textContent = omadaDevices.length;
+    renderInfraDevices();
+  } catch { document.getElementById('statDevices').textContent = '?'; }
+}
+function renderInfraDevices() {
+  const row = document.getElementById('devicesRow');
+  if (!omadaDevices.length) { row.innerHTML=''; return; }
+  row.innerHTML = omadaDevices.map(function(d) {
+    var type = (d.type||'').toLowerCase();
+    var icon='&#128225;', cls='ap';
+    if (type.includes('switch')) { icon='&#128256;'; cls='switch'; }
+    else if (type.includes('gateway')||type.includes('router')) { icon='&#127760;'; cls='gateway'; }
+    var isOn = d.status===0||d.statusCategory===0||d.status===14;
+    if (!isOn) cls='offline';
+    return '<div class="device-card"><div class="device-icon '+cls+'">'+icon+'</div><div class="device-info"><div class="name">'+esc(d.name||d.mac||'?')+'</div><div class="meta">'+esc(d.model||'')+(d.ip?' · '+esc(d.ip):'')+(d.clientNum!==undefined?' · '+d.clientNum+' clients':'')+'</div></div><span class="device-status '+(isOn?'online':'offline')+'">'+(isOn?'ONLINE':'OFFLINE')+'</span></div>';
+  }).join('');
+}
+
+// ── SETTINGS ──
+async function loadSettings() {
+  var data = await apiFetch('/settings');
+  if (!data) return;
+  var s = data.settings || {};
+  document.getElementById('setCutoff').value = s.session_cutoff_time || '';
+  document.getElementById('setDuration').value = s.session_duration_minutes || '1440';
+  document.getElementById('setOmada').value = s.omada_auth_minutes || '1440';
+}
+async function saveSettings() {
+  var body = {
+    session_cutoff_time: document.getElementById('setCutoff').value,
+    session_duration_minutes: document.getElementById('setDuration').value,
+    omada_auth_minutes: document.getElementById('setOmada').value,
+  };
+  var data = await apiPut('/settings', body);
+  if (data && data.success) toast('Settings saved','success');
+  else toast('Failed to save','error');
+}
+function toggleSettings() {
+  var p = document.getElementById('settingsPanel');
+  p.style.display = p.style.display==='none'?'block':'none';
+}
+
+// ── CHART ──
+function renderChart(daily) {
+  var chart = document.getElementById('barChart');
+  var max = Math.max.apply(null, daily.map(function(d){return d.count}).concat([1]));
+  chart.innerHTML = daily.slice().reverse().map(function(d) {
+    var pct = Math.max((d.count/max)*100, 2);
+    var day = new Date(d.date+'T00:00').toLocaleDateString('en',{weekday:'short'});
+    return '<div class="bar-col"><div class="bar-value">'+d.count+'</div><div class="bar" style="height:'+pct+'%"></div><div class="bar-label">'+day+' '+d.date.split('-')[2]+'</div></div>';
+  }).join('');
+}
+
+// ── TABS ──
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===tab)});
+  document.getElementById('usersPanel').style.display = tab==='users'?'':'none';
+  document.getElementById('sessionsPanel').style.display = tab==='sessions'?'':'none';
+}
+
+// ── USERS RENDER (phone-centric with nested devices) ──
+function renderUsers() {
+  var list = document.getElementById('userList');
+  if (!allUsersData.length) {
+    var q = document.getElementById('phoneSearch').value.trim();
+    list.innerHTML = '<div class="empty-state">'+(q?'No users matching "'+esc(q)+'"':'No registered users')+'</div>';
+    return;
+  }
+  list.innerHTML = allUsersData.map(function(u, idx) {
+    var initials = (u.name||'?').split(' ').map(function(w){return w[0]}).join('').toUpperCase().substring(0,2);
+    var connDevices = (u.devices||[]).filter(function(d){return d.connected});
+    var hasConnected = connDevices.length > 0;
+
+    // User card header
+    var html = '<div class="user-card" id="uc'+idx+'">';
+    html += '<div class="user-card-header" onclick="toggleUser('+idx+')">';
+    html += '<div class="user-avatar">'+initials+'</div>';
+    html += '<div class="user-main">';
+    html += '<div class="user-name">'+esc(u.name)+'</div>';
+    html += '<div class="user-phone">'+esc(u.phone)+'</div>';
+    html += '<div class="user-email">'+esc(u.email)+'</div>';
+    html += '</div>';
+    html += '<div class="user-badges">';
+    html += '<span class="badge sessions">'+u.totalSessions+' session'+(u.totalSessions!==1?'s':'')+'</span>';
+    html += '<span class="badge devices">'+u.deviceCount+' device'+(u.deviceCount!==1?'s':'')+'</span>';
+    if (hasConnected) html += '<span class="badge connected">'+connDevices.length+' online</span>';
+    html += '</div>';
+    html += '<span class="chevron">&#9654;</span>';
+    html += '</div>'; // end header
+
+    // Nested devices
+    html += '<div class="user-devices">';
+    if (!(u.devices||[]).length) {
+      html += '<div class="device-row"><span style="color:var(--gr);font-size:.68rem">No devices recorded</span></div>';
+    } else {
+      (u.devices||[]).forEach(function(d) {
+        html += '<div class="device-row">';
+        html += '<span class="device-dot '+(d.connected?'on':'off')+'"></span>';
+        html += '<span class="device-mac">'+esc(d.mac)+'</span>';
+        html += '<div class="device-detail">';
+        if (d.ip) html += '<span><span class="lbl">IP</span>'+esc(d.ip)+'</span>';
+        if (d.lastSsid) html += '<span><span class="lbl">SSID</span>'+esc(d.lastSsid)+'</span>';
+        if (d.apName) html += '<span><span class="lbl">AP</span>'+esc(d.apName)+'</span>';
+        if (d.connected && d.rssi) html += '<span>'+renderSignal(d.rssi)+'</span>';
+        html += '</div>';
+        html += '<div class="device-stats">';
+        html += '<span class="ds"><b>'+d.sessionCount+'</b> connects</span>';
+        if (d.connected) {
+          html += '<span class="ds">&#8593; '+fmtBytes(d.upload)+'</span>';
+          html += '<span class="ds">&#8595; '+fmtBytes(d.download)+'</span>';
+        }
+        html += '<span class="ds"><span class="lbl">Last</span>'+fmtTime(d.lastLogin)+'</span>';
+        html += '<span class="status '+(d.status||'expired')+'">'+(d.status||'expired')+'</span>';
+        html += '</div>';
+        html += '<div class="device-actions">';
+        if (d.connected) html += '<button class="action-btn danger" onclick="event.stopPropagation();kickClient(\''+esc(d.mac)+'\',this)">Kick</button>';
+        html += '</div>';
+        html += '</div>';
+      });
+    }
+    html += '</div>'; // end user-devices
+    html += '</div>'; // end user-card
+    return html;
+  }).join('');
+}
+
+function toggleUser(idx) {
+  var card = document.getElementById('uc' + idx);
+  if (card) card.classList.toggle('expanded');
+}
+
+// ── SESSIONS TABLE ──
+function renderSessions() {
+  var body = document.getElementById('sessionsBody');
+  document.getElementById('tableCount').textContent = todaySessions.length + ' session' + (todaySessions.length!==1?'s':'');
+  if (!todaySessions.length) { body.innerHTML='<tr><td colspan="8" class="empty-state">No sessions today</td></tr>'; return; }
+  body.innerHTML = todaySessions.map(function(s) {
+    var login = new Date(s.loginAt).toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
+    var exp = new Date(s.expiresAt).toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
+    var canRevoke = s.status==='active' && new Date(s.expiresAt) > new Date();
+    return '<tr><td>'+esc(s.name)+'</td><td>'+esc(s.phone)+'</td><td><span class="mac">'+esc(s.macAddress)+'</span></td><td>'+esc(s.ssid||'—')+'</td><td>'+login+'</td><td>'+exp+'</td><td><span class="status '+s.status+'">'+s.status+'</span></td><td>'+(canRevoke?'<button class="action-btn danger" onclick="revokeSession(\''+s.id+'\',this)">Revoke</button>':'')+'</td></tr>';
+  }).join('');
+}
+async function revokeSession(id, btn) {
+  if (!confirm('Revoke session + kick from WiFi?')) return;
+  btn.disabled=true; btn.textContent='...';
+  var data = await apiDelete('/sessions/' + encodeURIComponent(id));
+  if (data && data.success) { toast(data.kicked?'Revoked + kicked':'Revoked (kick failed)','success'); refreshAll(); }
+  else { toast(data?.message||'Failed','error'); btn.disabled=false; btn.textContent='Revoke'; }
+}
+
+// ── KICK ──
+async function kickClient(mac, btn) {
+  if (!confirm('Kick ' + mac + '?')) return;
+  btn.disabled=true; btn.textContent='...';
+  var data = await apiPost('/omada/clients/' + encodeURIComponent(mac) + '/kick');
+  if (data && data.success) { toast('Kicked','success'); setTimeout(function(){ loadUsers(); }, 2000); }
+  else { toast(data?.message||'Failed','error'); btn.disabled=false; btn.textContent='Kick'; }
+}
+
+// ── UTILS ──
+function esc(s) { var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+function toast(msg, type) { var el=document.getElementById('toast'); el.textContent=msg; el.className='toast '+(type||'success')+' show'; setTimeout(function(){el.classList.remove('show')},2500); }
+function fmtBytes(b) {
+  if (!b) return '0 B';
+  var u=['B','KB','MB','GB'], i=0, v=b;
+  while(v>=1024 && i<u.length-1){v/=1024;i++;}
+  return v.toFixed(i>0?1:0)+' '+u[i];
+}
+function fmtTime(t) {
+  if (!t) return '—';
+  var d = new Date(typeof t === 'number' ? t*1000 : t);
+  return d.toLocaleDateString('en',{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
+}
+function renderSignal(rssi) {
+  var level = 0;
+  if (rssi >= 0) level = Math.min(Math.floor(rssi/25), 4);
+  else level = rssi>-50?4:rssi>-60?3:rssi>-70?2:rssi>-80?1:0;
+  return '<div class="signal" title="'+rssi+' dBm">' + [4,6,9,12].map(function(h,i){ return '<div class="signal-bar'+(i<level?' on':'')+'" style="height:'+h+'px"></div>'; }).join('') + '</div>';
+}
+
+// ── INIT ──
+document.getElementById('loginPass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin()});
+document.getElementById('loginUser').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('loginPass').focus()});
+if (token) showDashboard();
+</script>
+</body>
+</html>

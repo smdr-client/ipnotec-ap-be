@@ -1,25 +1,26 @@
 /**
- * Omada Controller API v2 client.
+ * Omada Controller API client (v2 + Open API v1).
  *
- * Handles the 3-step authentication flow and external portal client authorization.
+ * Uses TWO auth mechanisms:
+ *   - v2 API (session-based): for getClients, getDevices, unauthorize, health
+ *   - Open API v1 (OAuth2 token): for hotspot client authorization
  *
- * Auth flow (from omada-api-toolkit docs):
- *   1. GET  /api/info                         → get omadacId (controller ID)
- *   2. POST /{omadacId}/api/v2/login           → get CSRF token + session cookie
- *   3. GET  /{omadacId}/api/v2/sites           → get siteId
- *   4. Every request needs: Csrf-Token header + ?token= URL param + session cookie
+ * The Open API hotspot/clients/{mac}/auth endpoint is the proper way to
+ * authorize captive-portal clients. The v2 extPortal/auth sets auth temporarily
+ * but reverts after ~10 seconds.
  *
- * Auth endpoint (extPortal/auth) does NOT use siteId in the URL.
- * Other site-scoped endpoints use: /{omadacId}/api/v2/sites/{siteId}/...
- *
- * CRITICAL PITFALL: CSRF token must be in BOTH the header AND the URL param.
- * Missing either causes a silent redirect to the login page (returns HTML, not JSON).
+ * Open API token format (client_credentials mode):
+ *   POST /openapi/authorize/token?grant_type=client_credentials
+ *   Body: { omadacId, client_id, client_secret }
+ *   Response header format: Authorization: AccessToken=<token>
  *
  * Required env:
- *   OMADA_URL      — e.g. https://localhost:8043 (same VM)
- *   OMADA_USER     — admin username
- *   OMADA_PASS     — admin password
- *   OMADA_SITE_ID  — (optional) site ID, auto-discovered if not set
+ *   OMADA_URL           — e.g. https://localhost:8043
+ *   OMADA_USER          — admin username (for v2 API)
+ *   OMADA_PASS          — admin password (for v2 API)
+ *   OMADA_SITE_ID       — site ID
+ *   OMADA_CLIENT_ID     — Open API client ID
+ *   OMADA_CLIENT_SECRET — Open API client secret
  */
 
 class OmadaClient {
@@ -29,6 +30,11 @@ class OmadaClient {
     private csrfToken: string = '';
     private sessionCookie: string = '';
     private retrying: boolean = false;
+
+    // Open API token state
+    private openApiToken: string = '';
+    private openApiTokenExpiry: number = 0;
+    private openApiRefreshToken: string = '';
 
     constructor() {
         this.host = process.env.OMADA_URL || '';
@@ -130,120 +136,265 @@ class OmadaClient {
         };
     }
 
-    /**
-     * Authorize a WiFi client via two Omada API calls:
-     *  1. extPortal/auth — registers the external portal authorization
-     *  2. cmd/clients/{mac}/auth — pushes the auth to the EAP so traffic is actually allowed
-     *
-     * @param clientMac  — client device MAC (e.g. "AA-BB-CC-DD-EE-FF")
-     * @param apMac      — access point MAC
-     * @param ssid       — network SSID
-     * @param radioId    — radio band ID (0 = 2.4GHz, 1 = 5GHz)
-     * @param minutes    — session duration in minutes (default: 1440 = 24 hours)
-     */
-    async authorizeClient(
-        clientMac: string,
-        apMac: string,
-        ssid: string,
-        radioId: number = 0,
-        minutes: number = 1440
-    ): Promise<{ success: boolean; errorCode: number; data?: unknown }> {
-        await this.ensureSession();
+    // ── Open API v1 (OAuth2) ────────────────────────────────────────
 
-        try {
-            // Step 1: External portal auth (registers the authorization in controller)
-            const extResult = await this.callExtPortalAuth(clientMac, apMac, ssid, radioId, minutes);
-            if (!extResult.success) {
-                // On failure, try re-login once
-                if (!this.retrying) {
-                    console.warn(`[Omada] extPortal/auth failed (errorCode=${extResult.errorCode}), retrying...`);
-                    this.retrying = true;
-                    this.csrfToken = '';
-                    this.sessionCookie = '';
-                    const result = await this.authorizeClient(clientMac, apMac, ssid, radioId, minutes);
-                    this.retrying = false;
-                    return result;
-                }
-                this.retrying = false;
-                return extResult;
-            }
+    /** Get a valid Open API access token, refreshing or re-acquiring as needed */
+    private async ensureOpenApiToken(): Promise<void> {
+        if (!this.omadacId) await this.init();
 
-            // Step 2: Push authorization to the EAP (actually allows traffic)
-            const cmdResult = await this.callCmdClientAuth(clientMac);
-            if (!cmdResult.success) {
-                console.warn(`[Omada] cmd/clients auth failed but extPortal succeeded — client may still get access`);
-            }
-
-            console.log(`[Omada] Client authorized: ${clientMac} for ${minutes} min`);
-            return { success: true, errorCode: 0, data: extResult.data };
-        } catch (err) {
-            console.error('[Omada] Network error during auth:', err);
-
-            // Try re-login once on network errors
-            if (!this.retrying) {
-                this.retrying = true;
-                this.csrfToken = '';
-                this.sessionCookie = '';
-                const result = await this.authorizeClient(clientMac, apMac, ssid, radioId, minutes);
-                this.retrying = false;
-                return result;
-            }
-
-            this.retrying = false;
-            return { success: false, errorCode: -1, data: String(err) };
+        // Token still valid (with 60s buffer)
+        if (this.openApiToken && Date.now() < this.openApiTokenExpiry - 60_000) {
+            return;
         }
+
+        // Try refresh first
+        if (this.openApiRefreshToken) {
+            try {
+                await this.refreshOpenApiToken();
+                return;
+            } catch {
+                console.warn('[Omada] Refresh token failed, re-acquiring...');
+            }
+        }
+
+        // Acquire new token via client_credentials
+        await this.acquireOpenApiToken();
     }
 
-    /** Call the extPortal/auth endpoint (registers authorization in controller) */
-    private async callExtPortalAuth(
-        clientMac: string, apMac: string, ssid: string, radioId: number, minutes: number
-    ): Promise<{ success: boolean; errorCode: number; data?: unknown }> {
-        const url = `${this.host}/${this.omadacId}/api/v2/hotspot/extPortal/auth?token=${encodeURIComponent(this.csrfToken)}`;
+    /** Acquire a new Open API token using client_credentials */
+    private async acquireOpenApiToken(): Promise<void> {
+        const url = `${this.host}/openapi/authorize/token?grant_type=client_credentials`;
         const res = await fetch(url, {
             method: 'POST',
-            headers: this.authHeaders(),
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                clientMac,
-                apMac,
-                ssidName: ssid.toLowerCase(),
-                radioId,
-                time: minutes,
-                authType: 4,
+                omadacId: this.omadacId,
+                client_id: process.env.OMADA_CLIENT_ID,
+                client_secret: process.env.OMADA_CLIENT_SECRET,
             }),
             // @ts-expect-error — Bun-specific TLS option
             tls: { rejectUnauthorized: false },
         });
 
-        const contentType = res.headers.get('content-type') || '';
-        if (contentType.includes('text/html')) {
-            return { success: false, errorCode: -1, data: 'Got HTML (session expired)' };
+        const data = await res.json() as {
+            errorCode: number;
+            msg?: string;
+            result?: { accessToken: string; expiresIn: number; refreshToken: string };
+        };
+
+        if (data.errorCode !== 0 || !data.result?.accessToken) {
+            throw new Error(`[Omada] Open API token failed: errorCode=${data.errorCode}, msg=${data.msg}`);
         }
 
-        const data = await res.json() as { errorCode: number; msg?: string; result?: unknown };
-        return { success: data.errorCode === 0, errorCode: data.errorCode, data: data.result };
+        this.openApiToken = data.result.accessToken;
+        this.openApiRefreshToken = data.result.refreshToken;
+        this.openApiTokenExpiry = Date.now() + data.result.expiresIn * 1000;
+        console.log(`[Omada] Open API token acquired (expires in ${data.result.expiresIn}s)`);
     }
 
-    /** Call cmd/clients/{mac}/auth — pushes authorization to the EAP to allow traffic */
-    private async callCmdClientAuth(clientMac: string): Promise<{ success: boolean; errorCode: number }> {
-        const url = `${this.host}/${this.omadacId}/api/v2/sites/${this.siteId}/cmd/clients/${clientMac}/auth?token=${encodeURIComponent(this.csrfToken)}`;
+    /** Refresh the Open API token */
+    private async refreshOpenApiToken(): Promise<void> {
+        const url = `${this.host}/openapi/authorize/token?grant_type=refresh_token&refresh_token=${encodeURIComponent(this.openApiRefreshToken)}`;
         const res = await fetch(url, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                client_id: process.env.OMADA_CLIENT_ID,
+                client_secret: process.env.OMADA_CLIENT_SECRET,
+            }),
+            // @ts-expect-error — Bun-specific TLS option
+            tls: { rejectUnauthorized: false },
+        });
+
+        const data = await res.json() as {
+            errorCode: number;
+            result?: { accessToken: string; expiresIn: number; refreshToken: string };
+        };
+
+        if (data.errorCode !== 0 || !data.result?.accessToken) {
+            this.openApiToken = '';
+            this.openApiRefreshToken = '';
+            throw new Error(`[Omada] Open API refresh failed: errorCode=${data.errorCode}`);
+        }
+
+        this.openApiToken = data.result.accessToken;
+        this.openApiRefreshToken = data.result.refreshToken;
+        this.openApiTokenExpiry = Date.now() + data.result.expiresIn * 1000;
+        console.log('[Omada] Open API token refreshed');
+    }
+
+    /** Headers for Open API requests */
+    private openApiHeaders(): Record<string, string> {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `AccessToken=${this.openApiToken}`,
+        };
+    }
+
+    // ── Client Authorization (Open API) ─────────────────────────────
+
+    /**
+     * Authorize a WiFi client via the Open API hotspot endpoint.
+     * This is the proper way to authorize captive-portal clients —
+     * the v2 extPortal/auth sets auth temporarily but reverts after ~10s.
+     */
+    async authorizeClient(
+        clientMac: string,
+        _apMac?: string,
+        _ssid?: string,
+        _radioId?: number,
+        _minutes?: number
+    ): Promise<{ success: boolean; errorCode: number; data?: unknown }> {
+        try {
+            await this.ensureOpenApiToken();
+
+            const url = `${this.host}/openapi/v1/${this.omadacId}/sites/${this.siteId}/hotspot/clients/${encodeURIComponent(clientMac)}/auth`;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: this.openApiHeaders(),
+                // @ts-expect-error — Bun-specific TLS option
+                tls: { rejectUnauthorized: false },
+            });
+
+            const data = await res.json() as { errorCode: number; msg?: string; result?: unknown };
+
+            if (data.errorCode === 0) {
+                console.log(`[Omada] Client authorized via Open API: ${clientMac}`);
+                return { success: true, errorCode: 0, data: data.result };
+            }
+
+            // Token expired — retry once
+            if ((data.errorCode === -44112 || data.errorCode === -44113) && !this.retrying) {
+                console.warn(`[Omada] Open API token expired, re-acquiring...`);
+                this.retrying = true;
+                this.openApiToken = '';
+                this.openApiRefreshToken = '';
+                const result = await this.authorizeClient(clientMac);
+                this.retrying = false;
+                return result;
+            }
+
+            console.error(`[Omada] Open API auth failed: errorCode=${data.errorCode}, msg=${data.msg}`);
+            return { success: false, errorCode: data.errorCode, data: data.msg };
+        } catch (err) {
+            console.error('[Omada] Open API auth error:', err);
+            return { success: false, errorCode: -1, data: String(err) };
+        }
+    }
+
+    /**
+     * Unauthorize a WiFi client via the Open API hotspot endpoint.
+     */
+    async unauthorizeClient(clientMac: string): Promise<{ success: boolean; errorCode: number }> {
+        try {
+            await this.ensureOpenApiToken();
+
+            const url = `${this.host}/openapi/v1/${this.omadacId}/sites/${this.siteId}/hotspot/clients/${encodeURIComponent(clientMac)}/unauth`;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: this.openApiHeaders(),
+                // @ts-expect-error — Bun-specific TLS option
+                tls: { rejectUnauthorized: false },
+            });
+
+            const data = await res.json() as { errorCode: number; msg?: string };
+            if (data.errorCode === 0) {
+                console.log(`[Omada] Client unauthorized via Open API: ${clientMac}`);
+            } else {
+                console.error(`[Omada] Open API unauth failed: errorCode=${data.errorCode}, msg=${data.msg}`);
+            }
+            return { success: data.errorCode === 0, errorCode: data.errorCode };
+        } catch (err) {
+            console.error('[Omada] Open API unauth error:', err);
+            return { success: false, errorCode: -1 };
+        }
+    }
+
+    // ── v2 API helpers (for getClients, getDevices, health) ─────────
+
+    /** Generic authenticated GET request to the site-scoped Omada v2 API */
+    private async siteGet(path: string): Promise<{ success: boolean; errorCode: number; data?: unknown }> {
+        await this.ensureSession();
+
+        const sep = path.includes('?') ? '&' : '?';
+        const url = `${this.host}/${this.omadacId}/api/v2/sites/${this.siteId}${path}${sep}token=${encodeURIComponent(this.csrfToken)}`;
+        const res = await fetch(url, {
             headers: this.authHeaders(),
-            body: JSON.stringify({}),
             // @ts-expect-error — Bun-specific TLS option
             tls: { rejectUnauthorized: false },
         });
 
         const contentType = res.headers.get('content-type') || '';
         if (contentType.includes('text/html')) {
-            return { success: false, errorCode: -1 };
+            // Session expired — re-login once
+            if (!this.retrying) {
+                this.retrying = true;
+                this.csrfToken = '';
+                this.sessionCookie = '';
+                const result = await this.siteGet(path);
+                this.retrying = false;
+                return result;
+            }
+            this.retrying = false;
+            return { success: false, errorCode: -1, data: 'Session expired (HTML response)' };
         }
 
-        const data = await res.json() as { errorCode: number };
-        if (data.errorCode === 0) {
-            console.log(`[Omada] EAP auth pushed for ${clientMac}`);
+        const data = await res.json() as { errorCode: number; result?: unknown };
+        return { success: data.errorCode === 0, errorCode: data.errorCode, data: data.result };
+    }
+
+    /** Generic authenticated POST request to the site-scoped Omada API */
+    private async sitePost(path: string, body: unknown = {}): Promise<{ success: boolean; errorCode: number; data?: unknown }> {
+        await this.ensureSession();
+
+        const sep = path.includes('?') ? '&' : '?';
+        const url = `${this.host}/${this.omadacId}/api/v2/sites/${this.siteId}${path}${sep}token=${encodeURIComponent(this.csrfToken)}`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: this.authHeaders(),
+            body: JSON.stringify(body),
+            // @ts-expect-error — Bun-specific TLS option
+            tls: { rejectUnauthorized: false },
+        });
+
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('text/html')) {
+            if (!this.retrying) {
+                this.retrying = true;
+                this.csrfToken = '';
+                this.sessionCookie = '';
+                const result = await this.sitePost(path, body);
+                this.retrying = false;
+                return result;
+            }
+            this.retrying = false;
+            return { success: false, errorCode: -1, data: 'Session expired (HTML response)' };
         }
-        return { success: data.errorCode === 0, errorCode: data.errorCode };
+
+        const data = await res.json() as { errorCode: number; result?: unknown };
+        return { success: data.errorCode === 0, errorCode: data.errorCode, data: data.result };
+    }
+
+    /** Get list of connected WiFi clients */
+    async getClients(): Promise<{ success: boolean; clients: unknown[] }> {
+        const result = await this.siteGet('/clients?currentPage=1&currentPageSize=500&filters.active=true');
+        if (!result.success) {
+            console.error(`[Omada] Failed to get clients: errorCode=${result.errorCode}`);
+            return { success: false, clients: [] };
+        }
+        const data = result.data as { data?: unknown[] } | undefined;
+        return { success: true, clients: data?.data || [] };
+    }
+
+    /** Get list of managed devices (APs, switches, gateways) */
+    async getDevices(): Promise<{ success: boolean; devices: unknown[] }> {
+        const result = await this.siteGet('/devices?currentPage=1&currentPageSize=100');
+        if (!result.success) {
+            console.error(`[Omada] Failed to get devices: errorCode=${result.errorCode}`);
+            return { success: false, devices: [] };
+        }
+        const data = result.data as { data?: unknown[] } | undefined;
+        return { success: true, devices: data?.data || [] };
     }
 
     /**

@@ -29,3 +29,9 @@ export const otpRequests = sqliteTable('otp_requests', {
     expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
     verified: integer('verified').notNull().default(0),
 });
+
+export const settings = sqliteTable('settings', {
+    key: text('key').primaryKey(),
+    value: text('value').notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+});

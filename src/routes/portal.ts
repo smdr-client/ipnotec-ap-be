@@ -14,6 +14,7 @@ import { users, otpRequests, sessions } from '../db/schema';
 import { generateOTP, hashOTP, verifyOTPHash } from '../utils/otp';
 import { sendEmailOTP } from '../services/email';
 import { omada } from '../services/omada';
+import { calculateSessionExpiry, getOmadaAuthMinutes } from '../services/settings';
 import {
     signOtpToken,
     signAuthToken,
@@ -53,8 +54,9 @@ portal.get('/', async (c) => {
         if (activeSession.length > 0) {
             console.log(`[Portal] Auto-reauth for returning client ${clientMac}`);
             try {
+                const authMinutes = await getOmadaAuthMinutes();
                 const result = await omada.authorizeClient(
-                    clientMac, apMac, ssid, Number(radioId), 1440
+                    clientMac, apMac, ssid, Number(radioId), authMinutes
                 );
                 if (result.success) {
                     console.log(`[Portal] Auto-reauth successful for ${clientMac}`);
@@ -292,9 +294,10 @@ portal.post('/accept', authMiddleware, async (c) => {
     const { userId, clientMac, apMac, ssid, radioId, redirectUrl } = jwtPayload;
 
     // --- Call Omada to authorize client ---
+    const authMinutes = await getOmadaAuthMinutes();
     let omadaResult;
     try {
-        omadaResult = await omada.authorizeClient(clientMac, apMac, ssid, radioId, 1440);
+        omadaResult = await omada.authorizeClient(clientMac, apMac, ssid, radioId, authMinutes);
     } catch (err) {
         console.error('[Portal] Omada auth error:', err);
         omadaResult = { success: false, errorCode: -1 };
@@ -305,8 +308,8 @@ portal.post('/accept', authMiddleware, async (c) => {
         // Still create the session record for tracking — Omada might be temporarily down
     }
 
-    // --- Create session record ---
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    // --- Create session record (uses global cutoff or fixed duration) ---
+    const expiresAt = await calculateSessionExpiry();
 
     await db.insert(sessions).values({
         userId,

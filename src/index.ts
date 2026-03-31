@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { trimTrailingSlash } from 'hono/trailing-slash';
 import { serveStatic } from 'hono/bun';
 import portal from './routes/portal';
 import admin from './routes/admin';
@@ -8,6 +9,7 @@ import { omada } from './services/omada';
 
 const app = new Hono();
 
+app.use(trimTrailingSlash());
 app.use('/*', logger());
 app.use('/*', cors());
 app.use('/static/*', serveStatic({ root: './' }));
