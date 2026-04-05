@@ -122,8 +122,11 @@ portal.post('/send-otp', async (c) => {
     if (!phone || typeof phone !== 'string' || !/^\d{10,12}$/.test(phone)) {
         return c.json({ success: false, message: 'Valid phone number is required (10-12 digits)' }, 400);
     }
-    // clientMac is optional — may be empty when testing via browser directly
-    const mac = (clientMac && typeof clientMac === 'string') ? clientMac : 'DIRECT-ACCESS';
+    // Require a real MAC address — block direct web access without Omada captive portal
+    if (!clientMac || typeof clientMac !== 'string' || clientMac === 'DIRECT-ACCESS' || !/^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$/.test(clientMac)) {
+        return c.json({ success: false, message: 'Please connect via WiFi to use this portal' }, 403);
+    }
+    const mac = clientMac;
 
     // --- Rate limit: no OTP sent for this phone in last 60 seconds ---
     const sixtySecondsAgo = new Date(Date.now() - 60_000);

@@ -195,7 +195,6 @@ tbody td{padding:8px 12px;font-size:.68rem;color:#ccc;white-space:nowrap}
       <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.7rem;color:var(--gr);">
         <span>Sent: <b style="color:#fff" id="smsSent">0</b></span>
         <span>Agreed: <b style="color:#fff" id="smsAgreed">108</b></span>
-        <span>Cap: <b style="color:#fff" id="smsCap">150</b></span>
         <span>Remaining: <b id="smsRemaining" style="color:#39FF14">—</b></span>
       </div>
     </div>
@@ -423,9 +422,9 @@ function toggleSettings() {
 async function loadSmsStats() {
   var data = await apiFetch('/sms/stats');
   if (!data) return;
-  var sent = data.sent || 0, agreed = data.agreedLimit || 108, cap = data.hardCap || 150;
+  var sent = data.sent || 0, agreed = data.agreedLimit || 108;
   var pct = agreed > 0 ? Math.round((sent/agreed)*100) : 0;
-  var remaining = Math.max(0, cap - sent);
+  var remaining = Math.max(0, agreed - sent);
   var bar = document.getElementById('smsBar');
   var color = pct >= 100 ? '#ff4444' : pct >= 80 ? '#ffaa00' : '#39FF14';
   bar.style.width = Math.min(pct, 100) + '%';
@@ -433,7 +432,6 @@ async function loadSmsStats() {
   document.getElementById('smsPct').textContent = pct + '%';
   document.getElementById('smsSent').textContent = sent;
   document.getElementById('smsAgreed').textContent = agreed;
-  document.getElementById('smsCap').textContent = cap;
   var remEl = document.getElementById('smsRemaining');
   remEl.textContent = remaining;
   remEl.style.color = remaining <= 20 ? '#ff4444' : '#39FF14';

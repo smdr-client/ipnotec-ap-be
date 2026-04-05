@@ -13,6 +13,7 @@ app.use(trimTrailingSlash());
 app.use('/*', logger());
 app.use('/*', cors());
 app.use('/static/*', serveStatic({ root: './' }));
+app.use('/fonts/*', serveStatic({ root: './static' }));
 
 // Routes — preserve query params from Omada redirect (/?clientMac=...&ssidName=...)
 app.get('/', (c) => {
