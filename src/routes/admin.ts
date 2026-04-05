@@ -22,6 +22,7 @@ import { users, sessions } from '../db/schema';
 import { signAdminToken, adminMiddleware } from '../middleware/auth';
 import { omada } from '../services/omada';
 import { getAllSettings, setSetting, calculateSessionExpiry, getOmadaAuthMinutes } from '../services/settings';
+import { getSmsStats } from '../services/sms';
 
 const admin = new Hono();
 
@@ -198,6 +199,14 @@ admin.use('/omada/*', adminMiddleware);
 admin.use('/settings', adminMiddleware);
 admin.use('/clients/*', adminMiddleware);
 admin.use('/users', adminMiddleware);
+
+// ────────────────────────────────────────────
+// GET /sms/stats — SMS usage stats
+// ────────────────────────────────────────────
+admin.get('/sms/stats', adminMiddleware, async (c) => {
+    const stats = await getSmsStats();
+    return c.json({ success: true, ...stats });
+});
 
 // ────────────────────────────────────────────
 // GET /settings — Get all admin settings

@@ -12,7 +12,8 @@ import { eq, desc, and, gt } from 'drizzle-orm';
 import { db } from '../db/index';
 import { users, otpRequests, sessions } from '../db/schema';
 import { generateOTP, hashOTP, verifyOTPHash } from '../utils/otp';
-import { sendEmailOTP } from '../services/email';
+import { sendSmsOTP } from '../services/sms';
+import { sendNewRegistrationNotification } from '../services/email';
 import { omada } from '../services/omada';
 import { calculateSessionExpiry, getOmadaAuthMinutes } from '../services/settings';
 import {
@@ -163,9 +164,9 @@ portal.post('/send-otp', async (c) => {
     }
 
     // --- Generate & store OTP ---
-    // Test bypass: fixed OTP for test email, no email sent
-    const isTestEmail = email.trim().toLowerCase() === 'girishcodes@gmail.com';
-    const otp = isTestEmail ? '123456' : generateOTP();
+    // Test bypass: fixed OTP for test phone, no SMS sent
+    const isTestPhone = phone === '919833229345';
+    const otp = isTestPhone ? '123456' : generateOTP();
     const otpHash = await hashOTP(otp);
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
@@ -175,18 +176,18 @@ portal.post('/send-otp', async (c) => {
         expiresAt,
     });
 
-    // --- Send OTP via Email (Resend) ---
-    let emailResult = { success: true, message: 'Test OTP: 123456' };
-    if (!isTestEmail) {
+    // --- Send OTP via SMS (Twilio) ---
+    let smsResult = { success: true, message: 'Test OTP: 123456' };
+    if (!isTestPhone) {
         if (process.env.NODE_ENV === 'development') {
-            console.log(`[DEV] OTP for ${email}: ${otp}`);
+            console.log(`[DEV] OTP for ${phone}: ${otp}`);
         }
-        emailResult = await sendEmailOTP(email.trim(), otp);
-        if (!emailResult.success) {
-            console.warn(`[Portal] Email OTP failed for ${email}: ${emailResult.message}`);
+        smsResult = await sendSmsOTP(phone, otp);
+        if (!smsResult.success) {
+            console.warn(`[Portal] SMS OTP failed for ${phone}: ${smsResult.message}`);
         }
     } else {
-        console.log(`[Portal] Test email detected — OTP fixed to 123456, skipping email`);
+        console.log(`[Portal] Test phone detected — OTP fixed to 123456, skipping SMS`);
     }
 
     // --- Sign OTP token ---
@@ -201,7 +202,7 @@ portal.post('/send-otp', async (c) => {
 
     return c.json({
         success: true,
-        message: emailResult.success ? 'OTP sent to your email' : 'OTP generated (email service not configured)',
+        message: smsResult.success ? 'OTP sent to your phone' : 'OTP generated (SMS service not configured)',
         otpToken,
     });
 });
@@ -271,6 +272,14 @@ portal.post('/verify-otp', async (c) => {
     if (user.length === 0) {
         return c.json({ success: false, message: 'User not found' }, 400);
     }
+
+    // --- Notify admin after successful verification (fire-and-forget) ---
+    sendNewRegistrationNotification({
+        name: user[0].name,
+        email: user[0].email,
+        phone,
+        clientMac,
+    }).catch((err) => console.error('[Portal] Notification email error:', err));
 
     // --- Sign auth token ---
     const authToken = await signAuthToken({

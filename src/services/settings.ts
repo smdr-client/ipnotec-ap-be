@@ -11,6 +11,11 @@ const DEFAULTS: Record<string, string> = {
     session_duration_minutes: '1440',
     // Omada auth duration in minutes (sent to controller)
     omada_auth_minutes: '1440',
+    // SMS tracking
+    sms_sent_count: '0',
+    sms_agreed_limit: '108',
+    sms_hard_cap: '150',
+    sms_last_alert_pct: '0',
 };
 
 /** Get a setting value. Returns default if not set. */

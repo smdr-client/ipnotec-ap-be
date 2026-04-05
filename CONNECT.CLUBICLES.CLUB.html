@@ -16,10 +16,12 @@
 :root {
   --blk: #000;
   --wht: #fff;
-  --dim: #999;
-  --dimmer: #555;
-  --surface: #1a1a1a;
-  --border: #3c3c3c;
+  --dim: #999;       /* doubled from #555 */
+  --dimmer: #555;    /* doubled from #2a2a2a */
+  --surface: #1a1a1a; /* doubled from #0c0c0c */
+  --border: #3c3c3c;  /* doubled from #1e1e1e */
+
+  /* VIBGYOR — doubled brightness */
   --dV:#A020FF; --dI:#5570FF; --dB:#20C0FF;
   --dG:#20FF66; --dY:#FFE030; --dO:#FF8020; --dR:#FF2050;
 }
@@ -36,7 +38,7 @@ body {
 }
 
 /* ══════════════════════════════════════════
-   PHONE FRAME
+   PHONE FRAME — full-bleed on mobile
 ══════════════════════════════════════════ */
 .frame {
   width:100%; max-width:430px;
@@ -118,7 +120,7 @@ body {
 @keyframes clubFlow { to{background-position:400% 50%} }
 
 /* ══════════════════════════════════════════
-   TYPOGRAPHY
+   TYPOGRAPHY SYSTEM
 ══════════════════════════════════════════ */
 .n-label {
   font-family:'Space Mono',monospace;
@@ -138,7 +140,7 @@ body {
 .div-fade { height:1px; background:linear-gradient(90deg,transparent,#3c3c3c,transparent); margin:20px 0; }
 
 /* ══════════════════════════════════════════
-   INPUTS
+   INPUTS — bigger tap targets for mobile
 ══════════════════════════════════════════ */
 .field-wrap { padding:0 24px; margin-bottom:18px; }
 .field-label { font-family:'Space Mono',monospace; font-size:.68rem; letter-spacing:2px; color:#bbb; margin-bottom:12px; display:block; }
@@ -151,10 +153,12 @@ body {
 }
 .n-input:focus { border-bottom-color:#fff; }
 .n-input::placeholder { color:#555; }
+/* hide number spinners */
 .n-input[type=number]::-webkit-outer-spin-button,
 .n-input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
 .n-input[type=number] { -moz-appearance:textfield; }
 
+/* Phone prefix row */
 .phone-row { display:flex; align-items:flex-end; gap:12px; }
 .prefix {
   font-family:'Space Mono',monospace; font-size:1rem; color:#bbb;
@@ -163,9 +167,11 @@ body {
 }
 
 /* ══════════════════════════════════════════
-   PINCODE
+   PINCODE FIELD WITH CITY AUTOFETCH
 ══════════════════════════════════════════ */
 .pin-wrap { padding:0 24px; margin-bottom:18px; }
+.pin-row { display:flex; align-items:flex-end; gap:10px; }
+.pin-input-wrap { flex:1; }
 .pin-city-badge {
   font-family:'Space Mono',monospace;
   font-size:.6rem; letter-spacing:1.5px;
@@ -189,24 +195,23 @@ body {
 }
 
 /* ══════════════════════════════════════════
-   OTP CELLS — 6 digits
+   OTP CELLS — larger for mobile
 ══════════════════════════════════════════ */
-.otp-row { display:flex; gap:10px; justify-content:center; padding:0 24px; margin:24px 0; }
+.otp-row { display:flex; gap:14px; justify-content:center; padding:0 24px; margin:24px 0; }
 .otp-cell {
-  flex:1; max-width:52px; height:60px;
+  flex:1; max-width:68px; height:68px;
   background:transparent; border:none; border-bottom:2px solid #444;
   color:#fff; font-family:'Orbitron',monospace;
-  font-size:1.4rem; font-weight:700; text-align:center; outline:none;
+  font-size:1.6rem; font-weight:700; text-align:center; outline:none;
   border-radius:0; transition:border-color .2s;
   -moz-appearance:textfield; -webkit-appearance:none;
 }
 .otp-cell::-webkit-outer-spin-button,
 .otp-cell::-webkit-inner-spin-button { -webkit-appearance:none; }
 .otp-cell.on { border-bottom-color:#fff; }
-.otp-cell.done { border-bottom-color:#20FF66; color:#20FF66; }
 
 /* ══════════════════════════════════════════
-   BUTTONS
+   BUTTONS — large tap targets
 ══════════════════════════════════════════ */
 .n-btn {
   width:100%; padding:18px 20px;
@@ -218,7 +223,6 @@ body {
   touch-action:manipulation;
 }
 .n-btn:active { transform:scale(.97); }
-.n-btn:disabled { opacity:.4; cursor:not-allowed; }
 .n-btn-white { background:#fff; color:#000; }
 .n-btn-white:active { background:#ddd; }
 .n-btn-ghost { background:transparent; color:#aaa; border:1px solid #555; }
@@ -235,7 +239,7 @@ body {
 .err-line.show { display:block; }
 
 /* ══════════════════════════════════════════
-   DISCO DOT GRID
+   ░░░ DISCO DOT GRID ░░░
 ══════════════════════════════════════════ */
 .disco-card {
   margin:0 20px;
@@ -291,7 +295,7 @@ body {
 .disco-card:active .join-shimmer { opacity:1; }
 
 /* ══════════════════════════════════════════
-   VIBGYOR WELCOME CARPET
+   ░░░ VIBGYOR WELCOME CARPET ░░░
 ══════════════════════════════════════════ */
 .carpet-frame {
   margin:0 20px;
@@ -345,6 +349,52 @@ body {
 @keyframes livePulse { 0%,100%{opacity:1}50%{opacity:.3} }
 
 /* ══════════════════════════════════════════
+   EXPAND FORM
+══════════════════════════════════════════ */
+.join-form {
+  display:none;
+  padding:22px 16px 18px;
+  animation:formSlide .4s cubic-bezier(.16,1,.3,1);
+}
+@keyframes formSlide { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:translateY(0)} }
+
+.form-field { margin-bottom:18px; }
+.form-label {
+  font-family:'Space Mono',monospace;
+  font-size:.66rem; letter-spacing:2px; color:#bbb;
+  display:block; margin-bottom:10px;
+  text-transform:uppercase;
+}
+.form-input {
+  width:100%; padding:12px 0;
+  background:transparent; border:none;
+  border-bottom:1px solid #555; color:#fff;
+  font-family:'Outfit',sans-serif; font-size:1.05rem;
+  outline:none; transition:border-color .2s; border-radius:0;
+  -webkit-appearance:none;
+}
+.form-input:focus { border-bottom-color:#fff; }
+.form-input::placeholder { color:#555; }
+
+.prefilled {
+  font-family:'Space Mono',monospace;
+  font-size:.82rem; color:#bbb;
+  padding:12px 0; border-bottom:1px solid #333;
+}
+
+.join-submit {
+  width:100%; margin-top:10px;
+  padding:17px;
+  background:#fff; color:#000;
+  font-family:'Orbitron',monospace;
+  font-weight:800; font-size:.75rem; letter-spacing:3px;
+  border:none; cursor:pointer; transition:.15s;
+  border-radius:0; text-transform:uppercase;
+  touch-action:manipulation; -webkit-appearance:none;
+}
+.join-submit:active { transform:scale(.98); background:#ddd; }
+
+/* ══════════════════════════════════════════
    BROWSE OPTION
 ══════════════════════════════════════════ */
 .browse-zone { padding:0 20px; margin-top:14px; }
@@ -360,7 +410,53 @@ body {
 .browse-btn:active { color:#bbb; }
 
 /* ══════════════════════════════════════════
-   VERIFIED GLYPH
+   THANK YOU / REDIRECT
+══════════════════════════════════════════ */
+#v-done {
+  align-items:center; justify-content:center;
+  text-align:center; padding:40px 32px;
+}
+.done-glyph {
+  width:80px; height:80px; border-radius:50%;
+  border:1px solid #3c3c3c;
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 28px;
+  position:relative;
+}
+.done-glyph::after {
+  content:'';
+  position:absolute; inset:-10px; border-radius:50%;
+  border:1px solid #3c3c3c;
+  animation:glyphRing 2s ease-in-out infinite;
+}
+@keyframes glyphRing { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:0;transform:scale(1.15)} }
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+.toast {
+  position:fixed; bottom:40px; left:50%; transform:translateX(-50%);
+  background:#1a1a1a; border:1px solid #444; color:#999;
+  font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:1.5px;
+  padding:12px 24px; white-space:nowrap; z-index:999;
+  animation:toastUp .25s ease;
+  border-radius:2px;
+}
+@keyframes toastUp { from{opacity:0;bottom:24px} to{opacity:1;bottom:40px} }
+
+/* ══════════════════════════════════════════
+   LOADING SPINNER
+══════════════════════════════════════════ */
+.spin {
+  display:inline-block;
+  width:16px; height:16px; border-radius:50%;
+  border:2px solid #555; border-top-color:#fff;
+  animation:spinning .6s linear infinite;
+}
+@keyframes spinning { to{transform:rotate(360deg)} }
+
+/* ══════════════════════════════════════════
+   SQUARE PULSE (last screen verified glyph)
 ══════════════════════════════════════════ */
 @keyframes squarePulse {
   0%   { opacity:.7; transform:scale(1);    border-color:rgba(32,255,102,.5); }
@@ -506,6 +602,9 @@ body {
   padding:6px 0 2px;
 }
 
+/* ══════════════════════════════════════════
+   FOMO LINE
+══════════════════════════════════════════ */
 .fomo-line {
   font-family:'Space Mono',monospace;
   font-size:.60rem; letter-spacing:1.5px;
@@ -513,34 +612,13 @@ body {
   padding:0 24px 2px;
   line-height:1.7;
 }
-
 /* ══════════════════════════════════════════
-   TOAST
+   SAFE AREA / MOBILE BOTTOM
 ══════════════════════════════════════════ */
-.toast {
-  position:fixed; bottom:40px; left:50%; transform:translateX(-50%);
-  background:#1a1a1a; border:1px solid #444; color:#999;
-  font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:1.5px;
-  padding:12px 24px; white-space:nowrap; z-index:999;
-  animation:toastUp .25s ease;
-  border-radius:2px;
-}
-@keyframes toastUp { from{opacity:0;bottom:24px} to{opacity:1;bottom:40px} }
-
-/* ══════════════════════════════════════════
-   LOADING SPINNER
-══════════════════════════════════════════ */
-.spin {
-  display:inline-block;
-  width:16px; height:16px; border-radius:50%;
-  border:2px solid #555; border-top-color:#fff;
-  animation:spinning .6s linear infinite;
-}
-@keyframes spinning { to{transform:rotate(360deg)} }
-
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .scroll { padding-bottom: env(safe-area-inset-bottom); }
 }
+
 </style>
 </head>
 <body>
@@ -557,7 +635,7 @@ body {
   <div class="scroll" id="scroll">
 
     <!-- ════════════════════════════
-         SCREEN 1 · PHONE + NAME + EMAIL
+         SCREEN 1 · PHONE + PINCODE
     ════════════════════════════ -->
     <div class="view on" id="v-phone">
       <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 0 48px;">
@@ -571,36 +649,14 @@ body {
 
         <div class="div-full"></div>
 
-        <!-- NAME -->
-        <div style="padding:12px 24px 0;">
-          <div class="n-label" style="margin-bottom:14px;">YOUR NAME</div>
-          <div class="field-wrap" style="padding:0;margin-bottom:10px;">
-            <input class="n-input" type="text" id="nameInput"
-              placeholder="Full name" maxlength="100"
-              inputmode="text" autocomplete="name"
-              onkeydown="if(event.key==='Enter')document.getElementById('emailInput').focus()">
-          </div>
-        </div>
-
-        <!-- EMAIL -->
-        <div style="padding:8px 24px 0;">
-          <div class="n-label" style="margin-bottom:14px;">EMAIL ADDRESS</div>
-          <div class="field-wrap" style="padding:0;margin-bottom:10px;">
-            <input class="n-input" type="email" id="emailInput"
-              placeholder="you@example.com" maxlength="200"
-              inputmode="email" autocomplete="email"
-              onkeydown="if(event.key==='Enter')document.getElementById('phoneInput').focus()">
-          </div>
-        </div>
-
         <!-- PHONE -->
-        <div style="padding:8px 24px 0;">
-          <div class="n-label" style="margin-bottom:14px;">PHONE NUMBER</div>
+        <div style="padding:24px 24px 0;">
+          <div class="n-label" style="margin-bottom:22px;">ENTER YOUR PHONE NUMBER</div>
 
           <div class="field-wrap" style="padding:0;margin-bottom:6px;">
             <div class="phone-row">
               <div style="display:flex;flex-direction:column;flex-shrink:0;">
-                <span style="font-family:'Space Mono',monospace;font-size:.60rem;letter-spacing:1.5px;color:#888;margin-bottom:10px;">CODE</span>
+                <span style="font-family:'Space Mono',monospace;font-size:.60rem;letter-spacing:1.5px;color:#888;margin-bottom:10px;">COUNTRY CODE</span>
                 <div style="display:flex;align-items:flex-end;gap:4px;">
                   <span style="font-family:'Space Mono',monospace;font-size:1rem;color:#bbb;padding-bottom:16px;border-bottom:1px solid #555;">+</span>
                   <input class="n-input" type="tel" id="countryCode"
@@ -620,7 +676,7 @@ body {
               </div>
             </div>
           </div>
-          <div class="err-line" id="phoneErr"></div>
+          <div class="err-line" id="phoneErr">ENTER VALID 10-DIGIT NUMBER</div>
         </div>
 
         <!-- DREAM COWORKING PIN · OPTIONAL -->
@@ -645,6 +701,7 @@ body {
               oninput="onPinInput(this)"
               onkeydown="if(event.key==='Enter')requestOTP()"
               autocomplete="off">
+            <!-- City autofetch result -->
             <div class="pin-city-badge" id="pinCityBadge" style="opacity:0;margin-top:8px;"></div>
           </div>
         </div>
@@ -669,7 +726,7 @@ body {
     </div>
 
     <!-- ════════════════════════════
-         SCREEN 2 · OTP (6         digits)
+         SCREEN 2 · OTP
     ════════════════════════════ -->
     <div class="view" id="v-otp">
       <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 0 48px;">
@@ -684,7 +741,8 @@ body {
         <div class="div-full"></div>
 
         <div style="padding:24px 24px 0;">
-          <div class="n-label">OTP SENT TO +<span id="countryMask">91</span> <span id="phoneMask">—</span></div>
+          <div class="n-label">CODE SENT TO +<span id="countryMask">91</span> <span id="phoneMask">—</span></div>
+          <div style="margin-top:8px;font-family:'Space Mono',monospace;font-size:.64rem;color:#666;letter-spacing:1px;">DEMO: USE 1234</div>
         </div>
 
         <div class="otp-row">
@@ -692,10 +750,8 @@ body {
           <input class="otp-cell" type="number" id="o1" maxlength="1" min="0" max="9" inputmode="numeric">
           <input class="otp-cell" type="number" id="o2" maxlength="1" min="0" max="9" inputmode="numeric">
           <input class="otp-cell" type="number" id="o3" maxlength="1" min="0" max="9" inputmode="numeric">
-          <input class="otp-cell" type="number" id="o4" maxlength="1" min="0" max="9" inputmode="numeric">
-          <input class="otp-cell" type="number" id="o5" maxlength="1" min="0" max="9" inputmode="numeric">
         </div>
-        <div class="err-line" id="otpErr"></div>
+        <div class="err-line" id="otpErr">INCORRECT CODE · TRY AGAIN</div>
 
         <div class="btn-zone">
           <button class="n-btn n-btn-white" id="verifyBtn" onclick="verifyOTP()">
@@ -706,14 +762,14 @@ body {
 
         <div style="padding:24px 24px 0;text-align:center;">
           <div style="font-family:'Space Mono',monospace;font-size:.66rem;color:#666;letter-spacing:1px;">
-            RESEND OTP · <span id="resendTimer" style="color:#aaa;cursor:pointer;" onclick="resendOTP()">30s</span>
+            RESEND OTP · <span id="resendTimer" style="color:#aaa;">30s</span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- ════════════════════════════
-         SCREEN 3 · VERIFIED — JOIN / BROWSE
+         SCREEN 3 · VERIFIED — JOIN / BOOKMARK / BROWSE
     ════════════════════════════ -->
     <div class="view" id="v-choice">
       <div style="flex:1;display:flex;flex-direction:column;padding:20px 0 36px;">
@@ -727,12 +783,14 @@ body {
 
         <div class="div-full"></div>
 
+        <!-- ░░ VERIFIED GLYPH — SQUARE PULSE ░░ -->
         <div style="display:flex;align-items:center;justify-content:center;padding:18px 0 10px;">
           <div class="done-glyph-sq" id="doneGlyph" style="margin:0;">
             <span style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:800;color:#fff;letter-spacing:1px;">✓</span>
           </div>
         </div>
 
+        <!-- ░░ HEADING ░░ -->
         <div style="text-align:center;padding:0 24px 6px;">
           <div style="font-family:'Orbitron',monospace;font-weight:800;font-size:1.15rem;letter-spacing:2px;color:#fff;line-height:1.5;">
             JOIN THE FREE<br>COWORKING COMMUNITY
@@ -741,6 +799,7 @@ body {
 
         <div class="div-fade" style="margin:16px 24px;"></div>
 
+        <!-- ░░ DISCO CREATE PROFILE CARD · VIBGYOR WELCOME CARPET ░░ -->
         <div class="carpet-frame">
           <div class="carpet-stripes"></div>
           <div class="carpet-fringe-top"></div>
@@ -767,18 +826,21 @@ body {
           <div class="carpet-welcome">॥ स्वागतम · SWAGATAM ॥</div>
         </div>
 
+        <!-- ░░ BOOKMARK OPTION ░░ -->
         <div style="padding:16px 20px 0;">
           <button class="browse-btn" onclick="bookmarkAndSkip()" style="width:100%;border:1px solid #2a2a2a;padding:17px 20px;">
             BOOKMARK · CREATE LATER →
           </button>
         </div>
 
+        <!-- ░░ BROWSE INTERNET ░░ -->
         <div class="browse-zone" style="margin-top:8px;">
           <button class="browse-btn" onclick="browse()">
             BROWSE THE INTERNET →
           </button>
         </div>
 
+        <!-- Footer note -->
         <div style="padding:8px 24px;margin-top:auto;">
           <div style="height:1px;background:#222;margin-bottom:14px;"></div>
           <div style="font-family:'Space Mono',monospace;font-size:.60rem;
@@ -790,37 +852,20 @@ body {
       </div>
     </div>
 
-    <!-- ════════════════════════════
-         SCREEN 4 · AUTO-REAUTH (returning user)
-    ════════════════════════════ -->
-    <div class="view" id="v-reauth">
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;">
-        <div class="done-glyph-sq" style="border-color:var(--dG);box-shadow:0 0 32px rgba(32,255,102,.25);">
-          <span style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:800;color:#20FF66;letter-spacing:1px;">✓</span>
-        </div>
-        <div style="font-family:'Orbitron',monospace;font-weight:800;font-size:1.1rem;letter-spacing:2px;color:#fff;margin-bottom:8px;">
-          WELCOME BACK
-        </div>
-        <div style="font-family:'Space Mono',monospace;font-size:.68rem;color:#888;letter-spacing:1.5px;line-height:1.8;">
-          SESSION ACTIVE · RECONNECTED<br>YOU'RE GOOD TO GO
-        </div>
-        <div style="margin-top:24px;">
-          <button class="n-btn n-btn-white" style="padding:16px 40px;" onclick="browse()">CONTINUE BROWSING →</button>
-        </div>
-        <div class="ipnotec-footer" style="margin-top:32px;">POWERED BY IPNOTEC</div>
-      </div>
-    </div>
+  </div><!-- scroll -->
+</div><!-- frame -->
 
-  </div>
-</div>
-
-<!-- FOUNDER CONNECT FLOAT BTN -->
+<!-- ════════════════════════════
+     FOUNDER CONNECT FLOAT BTN
+════════════════════════════ -->
 <button id="founderBtn" onclick="openFounder()">
   <div class="f-blink"></div>
   FOUNDER CONNECT
 </button>
 
-<!-- FOUNDER CONNECT MODAL -->
+<!-- ════════════════════════════
+     FOUNDER CONNECT MODAL
+════════════════════════════ -->
 <div id="founderModal" onclick="closeFounderOutside(event)">
   <div class="modal-sheet" id="modalSheet">
     <div class="modal-handle"></div>
@@ -850,30 +895,24 @@ body {
 
 <script>
 // ══════════════════════════════════════════════
-// PORTAL CONFIG (injected by server)
-// ══════════════════════════════════════════════
-var PORTAL = window.__PORTAL__ || { clientMac:'', apMac:'', ssid:'', radioId:0, redirectUrl:'', autoReauth:false };
-
-// ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
-var S = {
+const S = {
   phone:'', name:'', email:'', pincode:'', city:'', countryCode:'91',
-  otpToken: null,
-  authToken: null,
+  formOpen:false,
+  ssid:''
 };
 
 // ══════════════════════════════════════════════
 // AUDIO ENGINE
 // ══════════════════════════════════════════════
-var _ac;
-function ac() { if(!_ac) try{_ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}; return _ac; }
+let _ac;
+const ac = () => { if(!_ac) try{_ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}; return _ac; };
 
-function tone(freq, dur, vol, wave, delay){
-  vol=vol||.1; wave=wave||'sine'; delay=delay||0;
-  var c=ac(); if(!c) return;
+function tone(freq, dur, vol=.1, wave='sine', delay=0){
+  const c=ac(); if(!c) return;
   try{
-    var o=c.createOscillator(), g=c.createGain();
+    const o=c.createOscillator(), g=c.createGain();
     o.connect(g); g.connect(c.destination);
     o.type=wave; o.frequency.setValueAtTime(freq, c.currentTime+delay);
     g.gain.setValueAtTime(0, c.currentTime+delay);
@@ -884,360 +923,247 @@ function tone(freq, dur, vol, wave, delay){
   }catch(e){}
 }
 
-var snd = {
-  click:  function(){ tone(900,.05,.06); },
-  tap:    function(){ tone(700,.04,.05); },
-  pop:    function(){ tone(600,.08,.08); tone(900,.06,.05,'sine',.04); },
-  disco:  function(){ [800,1000,1200,1000].forEach(function(f,i){tone(f,.08,.06,'sine',i*.05)}); },
-  open:   function(){ [400,600,800,1100].forEach(function(f,i){tone(f,.12,.07,'sine',i*.06)}); },
-  otp:    function(){ tone(1200,.1,.08); setTimeout(function(){tone(1600,.1,.06)},100); },
-  err:    function(){ tone(200,.3,.1,'sawtooth'); },
-  success:function(){ [500,700,900,1200,1600].forEach(function(f,i){tone(f,.15,.07,'sine',i*.07)}); },
-  type:   function(){ tone(800+Math.random()*200,.03,.03); },
-  cityOk: function(){ tone(1400,.08,.06); setTimeout(function(){tone(1800,.1,.05)},80); },
+const snd = {
+  click:  ()=>{ tone(900,.05,.06); },
+  tap:    ()=>{ tone(700,.04,.05); },
+  pop:    ()=>{ tone(600,.08,.08); tone(900,.06,.05,'sine',.04); },
+  disco:  ()=>{ [800,1000,1200,1000].forEach((f,i)=>tone(f,.08,.06,'sine',i*.05)); },
+  open:   ()=>{ [400,600,800,1100].forEach((f,i)=>tone(f,.12,.07,'sine',i*.06)); },
+  otp:    ()=>{ tone(1200,.1,.08); setTimeout(()=>tone(1600,.1,.06),100); },
+  err:    ()=>{ tone(200,.3,.1,'sawtooth'); },
+  success:()=>{ [500,700,900,1200,1600].forEach((f,i)=>tone(f,.15,.07,'sine',i*.07)); },
+  type:   ()=>{ tone(800+Math.random()*200,.03,.03); },
+  cityOk: ()=>{ tone(1400,.08,.06); setTimeout(()=>tone(1800,.1,.05),80); },
 };
 
-document.addEventListener('touchstart',function(){ try{ac()&&_ac.state==='suspended'&&_ac.resume()}catch(e){} },{once:true,passive:true});
-
-// ══════════════════════════════════════════════
-// API HELPER
-// ══════════════════════════════════════════════
-function apiPost(path, body, token) {
-  var headers = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = 'Bearer ' + token;
-  return fetch(path, { method: 'POST', headers: headers, body: JSON.stringify(body) }).then(function(r){ return r.json(); });
-}
+document.addEventListener('touchstart',()=>{ try{ac()&&_ac.state==='suspended'&&_ac.resume()}catch(e){} },{once:true,passive:true});
 
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
 (function(){
-  var ssid = PORTAL.ssid || '';
-  document.getElementById('ssidTxt').textContent = ssid ? 'CLUBICLES.'+ssid : 'CLUBICLES';
-  if(ssid) document.getElementById('ssidFoot').textContent = ssid;
+  const p = new URLSearchParams(location.search);
+  S.ssid = p.get('ssid')||'';
+  document.getElementById('ssidTxt').textContent = S.ssid ? 'CLUBICLES.'+S.ssid : 'CLUBICLES';
+  if(S.ssid) document.getElementById('ssidFoot').textContent = S.ssid;
 
   // Clock
-  function tick(){
-    var n=new Date();
+  const tick=()=>{
+    const n=new Date();
     document.getElementById('clockTxt').textContent =
       n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');
-  }
+  };
   tick(); setInterval(tick,15000);
 
-  // OTP cell wiring (6 digits)
-  for(var i=0;i<6;i++){
-    (function(idx){
-      var el=document.getElementById('o'+idx);
-      el.addEventListener('input',function(){
-        if(this.value.length>1) this.value=this.value.slice(-1);
-        this.classList.toggle('on',!!this.value);
-        if(this.value && idx<5) document.getElementById('o'+(idx+1)).focus();
-        // Auto-verify when all 6 filled
-        if(idx===5 && this.value){
-          var code='';
-          for(var j=0;j<6;j++) code+=document.getElementById('o'+j).value;
-          if(code.length===6) setTimeout(verifyOTP,150);
-        }
-      });
-      el.addEventListener('keydown',function(e){
-        if(e.key==='Backspace'&&!this.value&&idx>0) document.getElementById('o'+(idx-1)).focus();
-      });
-    })(i);
+  // OTP cell wiring
+  for(let i=0;i<4;i++){
+    const el=document.getElementById('o'+i);
+    el.addEventListener('input',function(){
+      if(this.value.length>1) this.value=this.value.slice(-1);
+      this.classList.toggle('on',!!this.value);
+      if(this.value&&i<3) document.getElementById('o'+(i+1)).focus();
+    });
+    el.addEventListener('keydown',function(e){
+      if(e.key==='Backspace'&&!this.value&&i>0) document.getElementById('o'+(i-1)).focus();
+    });
   }
 
   initDots();
-
-  // AUTO-REAUTH: if server says session is active, show welcome back
-  if (PORTAL.autoReauth) {
-    showView('v-reauth');
-    snd.success();
-  }
 })();
 
 // ══════════════════════════════════════════════
 // VIEW MANAGER
 // ══════════════════════════════════════════════
 function showView(id){
-  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('on')});
-  document.getElementById(id).classList.add('on');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  const el=document.getElementById(id);
+  el.classList.add('on');
   document.getElementById('scroll').scrollTop=0;
 }
 
 // ══════════════════════════════════════════════
-// SCREEN 1 · PHONE INPUT
+// SCREEN 1 · PHONE
 // ══════════════════════════════════════════════
 function onPhoneInput(el){
   snd.type();
+  // strip non-digits
   el.value = el.value.replace(/\D/g,'');
   if(el.value.length>10) el.value=el.value.slice(0,10);
   document.getElementById('phoneErr').classList.remove('show');
 }
 
 // ══════════════════════════════════════════════
-// PINCODE / CITY AUTOFETCH
+// PINCODE / CITY AUTOFETCH (India Post API)
 // ══════════════════════════════════════════════
-var pinFetchTimer = null;
+let pinFetchTimer = null;
 
-function fetchCityFromPin(pin){
-  var badge = document.getElementById('pinCityBadge');
+// India pincode → city lookup via api.postalpincode.in (free, no-auth)
+async function fetchCityFromPin(pin){
+  const badge = document.getElementById('pinCityBadge');
   badge.style.opacity='1';
   badge.className='pin-city-badge loading';
   badge.innerHTML='<span class="pin-spinner"></span><span style="margin-left:6px;">LOCATING...</span>';
 
-  fetch('https://api.postalpincode.in/pincode/'+pin, {signal: AbortSignal.timeout(5000)})
-    .then(function(r){return r.json()})
-    .then(function(data){
-      if(data && data[0] && data[0].Status === 'Success' && data[0].PostOffice && data[0].PostOffice.length > 0){
-        var po = data[0].PostOffice[0];
-        var city = po.Division || po.District || po.Block || po.Name;
-        var state = po.State || '';
-        S.city = city;
-        S.pincode = pin;
-        badge.className='pin-city-badge';
-        badge.innerHTML='<div class="city-dot"></div><span>'+city.toUpperCase()+(state ? ' · '+state.toUpperCase() : '')+'</span>';
-        snd.cityOk();
-      } else {
-        badge.style.opacity='0'; badge.innerHTML='';
-        S.city=pin; S.pincode='';
-      }
-    })
-    .catch(function(){
+  try {
+    const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`, {signal: AbortSignal.timeout(5000)});
+    const data = await res.json();
+    if(data && data[0] && data[0].Status === 'Success' && data[0].PostOffice && data[0].PostOffice.length > 0){
+      const po = data[0].PostOffice[0];
+      const city = po.Division || po.District || po.Block || po.Name;
+      const state = po.State || '';
+      S.city = city;
+      S.pincode = pin;
+      badge.className='pin-city-badge';
+      badge.innerHTML=`<div class="city-dot"></div><span>${city.toUpperCase()}${state ? ' · '+state.toUpperCase() : ''}</span>`;
+      snd.cityOk();
+      return true;
+    } else {
+      // silent fail — field is optional, store raw input, hide badge
       badge.style.opacity='0'; badge.innerHTML='';
       S.city=pin; S.pincode='';
-    });
+      return false;
+    }
+  } catch(e) {
+    // silent fail — field is optional
+    badge.style.opacity='0'; badge.innerHTML='';
+    S.city=pin; S.pincode='';
+    return false;
+  }
 }
 
 function onPinInput(el){
   snd.type();
-  var val = el.value.trim();
-  var badge = document.getElementById('pinCityBadge');
+  const val = el.value.trim();
+  const badge = document.getElementById('pinCityBadge');
+
+  // If purely numeric and 6 digits → treat as pincode
   if(/^\d{6}$/.test(val)){
     clearTimeout(pinFetchTimer);
-    pinFetchTimer = setTimeout(function(){fetchCityFromPin(val)}, 400);
+    pinFetchTimer = setTimeout(()=>fetchCityFromPin(val), 400);
   } else if(val.length > 0){
+    // Free text city name — just store it
     clearTimeout(pinFetchTimer);
-    S.city = val; S.pincode = '';
-    badge.style.opacity='0'; badge.innerHTML='';
+    S.city = val;
+    S.pincode = '';
+    badge.style.opacity='0';
+    badge.innerHTML='';
   } else {
-    badge.style.opacity='0'; badge.innerHTML='';
+    badge.style.opacity='0';
+    badge.innerHTML='';
     S.city=''; S.pincode='';
   }
 }
 
-// ══════════════════════════════════════════════
-// REQUEST OTP → backend
-// ══════════════════════════════════════════════
 function requestOTP(){
   snd.click();
-  var name = document.getElementById('nameInput').value.trim();
-  var email = document.getElementById('emailInput').value.trim();
-  var ph = document.getElementById('phoneInput').value.replace(/\D/g,'');
-  var cc = document.getElementById('countryCode').value.replace(/\D/g,'')||'91';
-  var errEl = document.getElementById('phoneErr');
-
-  // Validate
-  if(!name){
-    errEl.textContent='ENTER YOUR NAME'; errEl.classList.add('show'); snd.err();
-    document.getElementById('nameInput').focus(); return;
-  }
-  if(!email || !email.includes('@') || !email.includes('.')){
-    errEl.textContent='ENTER VALID EMAIL'; errEl.classList.add('show'); snd.err();
-    document.getElementById('emailInput').focus(); return;
-  }
+  const ph = document.getElementById('phoneInput').value.replace(/\D/g,'');
   if(ph.length!==10){
-    errEl.textContent='ENTER VALID 10-DIGIT NUMBER'; errEl.classList.add('show'); snd.err();
-    document.getElementById('phoneInput').focus(); return;
+    document.getElementById('phoneErr').classList.add('show');
+    snd.err(); return;
   }
 
-  var pinVal = document.getElementById('pinInput').value.trim();
-  S.phone=ph; S.name=name; S.email=email; S.countryCode=cc;
-  if(pinVal && !S.city) S.city = pinVal;
+  const pinVal = document.getElementById('pinInput').value.trim();
 
-  var btn=document.getElementById('otpBtn');
+  const cc = document.getElementById('countryCode').value.replace(/\D/g,'')||'91';
+  S.phone=ph;
+  S.countryCode=cc;
+  if(pinVal && !S.city) S.city = pinVal; // fallback: use raw text if provided
+
+  const btn=document.getElementById('otpBtn');
   btn.innerHTML='<div class="spin"></div>';
   btn.disabled=true;
-  errEl.classList.remove('show');
 
-  apiPost('/portal/send-otp', {
-    name: name,
-    email: email,
-    phone: cc + ph,
-    clientMac: PORTAL.clientMac,
-    apMac: PORTAL.apMac,
-    ssid: PORTAL.ssid,
-    radioId: PORTAL.radioId,
-    redirectUrl: PORTAL.redirectUrl,
-  }).then(function(data){
-    btn.innerHTML='GET OTP →'; btn.disabled=false;
-    if(!data.success){
-      errEl.textContent=(data.message||'FAILED TO SEND OTP').toUpperCase();
-      errEl.classList.add('show'); snd.err();
-      return;
-    }
-    S.otpToken = data.otpToken;
+  setTimeout(()=>{
     snd.otp();
-    // Populate OTP screen
-    document.getElementById('phoneMask').textContent = ph.slice(0,3)+'****'+ph.slice(7);
-    document.getElementById('countryMask').textContent = cc;
-    // Reset OTP cells
-    for(var i=0;i<6;i++){
-      var c=document.getElementById('o'+i);
-      c.value=''; c.className='otp-cell';
-    }
-    document.getElementById('otpErr').classList.remove('show');
-    showView('v-otp');
-    setTimeout(function(){document.getElementById('o0').focus()},300);
-    startResend();
-  }).catch(function(e){
     btn.innerHTML='GET OTP →'; btn.disabled=false;
-    errEl.textContent='NETWORK ERROR'; errEl.classList.add('show'); snd.err();
-  });
+    document.getElementById('phoneMask').textContent = ph.slice(0,5)+'·····';
+    document.getElementById('countryMask').textContent = cc;
+    showView('v-otp');
+    setTimeout(()=>document.getElementById('o0').focus(),300);
+    startResend();
+  },1200);
 }
 
 // ══════════════════════════════════════════════
 // SCREEN 2 · OTP
 // ══════════════════════════════════════════════
-var resendIv, resendSecs=0;
-
+let resendIv;
 function startResend(){
-  resendSecs=60;
-  var el=document.getElementById('resendTimer');
-  el.style.cursor='default'; el.style.color='#aaa';
+  let t=30;
+  const el=document.getElementById('resendTimer');
   clearInterval(resendIv);
-  resendIv=setInterval(function(){
-    resendSecs--;
-    if(resendSecs<=0){ clearInterval(resendIv); el.textContent='RESEND'; el.style.cursor='pointer'; el.style.color='#888'; }
-    else el.textContent=resendSecs+'s';
+  resendIv=setInterval(()=>{
+    t--;
+    if(t<=0){ clearInterval(resendIv); el.textContent='RESEND'; el.style.cursor='pointer'; el.style.color='#888'; }
+    else el.textContent=t+'s';
   },1000);
-}
-
-function resendOTP(){
-  if(resendSecs>0) return; // still counting down
-  var errEl = document.getElementById('otpErr');
-  errEl.classList.remove('show');
-  var cc = S.countryCode||'91';
-
-  apiPost('/portal/send-otp', {
-    name: S.name, email: S.email, phone: cc + S.phone,
-    clientMac: PORTAL.clientMac,
-    apMac: PORTAL.apMac,
-    ssid: PORTAL.ssid,
-    radioId: PORTAL.radioId,
-    redirectUrl: PORTAL.redirectUrl,
-  }).then(function(data){
-    if(data.success){
-      S.otpToken = data.otpToken;
-      toast('NEW OTP SENT TO PHONE');
-      startResend();
-      for(var i=0;i<6;i++){document.getElementById('o'+i).value='';document.getElementById('o'+i).className='otp-cell';}
-      document.getElementById('o0').focus();
-    } else {
-      errEl.textContent=(data.message||'FAILED').toUpperCase(); errEl.classList.add('show'); snd.err();
-    }
-  }).catch(function(){
-    errEl.textContent='NETWORK ERROR'; errEl.classList.add('show'); snd.err();
-  });
 }
 
 function goBack(){
   try{ snd.tap(); }catch(e){}
-  clearInterval(resendIv);
-  for(var i=0;i<6;i++){
-    var c=document.getElementById('o'+i);
-    if(c){ c.value=''; c.classList.remove('on','done'); }
+  try{ clearInterval(resendIv); }catch(e){}
+  // clear OTP cells so view is fresh on next visit
+  for(let i=0;i<4;i++){
+    const c=document.getElementById('o'+i);
+    if(c){ c.value=''; c.classList.remove('on'); }
   }
-  document.getElementById('otpErr').classList.remove('show');
+  const err=document.getElementById('otpErr');
+  if(err) err.classList.remove('show');
   showView('v-phone');
 }
 
 function verifyOTP(){
   snd.click();
-  var code='';
-  for(var i=0;i<6;i++) code+=document.getElementById('o'+i).value;
-  if(code.length!==6) return;
-
-  var btn=document.getElementById('verifyBtn');
-  var errEl=document.getElementById('otpErr');
+  const code=['o0','o1','o2','o3'].map(id=>document.getElementById(id).value).join('');
+  const btn=document.getElementById('verifyBtn');
   btn.innerHTML='<div class="spin"></div>'; btn.disabled=true;
-  errEl.classList.remove('show');
 
-  apiPost('/portal/verify-otp', {
-    otp: code,
-    otpToken: S.otpToken,
-  }).then(function(data){
+  setTimeout(()=>{
     btn.innerHTML='VERIFY →'; btn.disabled=false;
-    if(!data.success){
-      errEl.textContent=(data.message||'INVALID OTP').toUpperCase();
-      errEl.classList.add('show'); snd.err();
-      for(var i=0;i<6;i++){
-        var c=document.getElementById('o'+i);
-        c.style.borderBottomColor='#FF2050'; c.value='';
-        (function(el){setTimeout(function(){el.style.borderBottomColor=''},1200)})(c);
-      }
+    if(code==='1234'){
+      snd.success();
+      showView('v-choice');
+      // Activate verified square glyph glow
+      const glyph=document.getElementById('doneGlyph');
+      glyph.style.borderColor='var(--dG)';
+      glyph.style.boxShadow='0 0 32px rgba(32,255,102,.25)';
+      // Update square pulse ring color
+      glyph.style.setProperty('--pulse-color','var(--dG)');
+      setTimeout(startDisco,200);
+    } else {
+      snd.err();
+      document.getElementById('otpErr').classList.add('show');
+      ['o0','o1','o2','o3'].forEach(id=>{
+        const c=document.getElementById(id);
+        c.style.borderBottomColor='#FF2050';
+        c.value='';
+        setTimeout(()=>c.style.borderBottomColor='',1200);
+      });
       document.getElementById('o0').focus();
-      return;
     }
-
-    S.authToken = data.authToken;
-
-    // Show verified state
-    for(var i=0;i<6;i++){
-      document.getElementById('o'+i).classList.remove('on');
-      document.getElementById('o'+i).classList.add('done');
-    }
-    snd.success();
-    clearInterval(resendIv);
-
-    // Now call /accept to authorize WiFi via Omada
-    doAccept();
-  }).catch(function(e){
-    btn.innerHTML='VERIFY →'; btn.disabled=false;
-    errEl.textContent='NETWORK ERROR'; errEl.classList.add('show'); snd.err();
-  });
-}
-
-// ══════════════════════════════════════════════
-// ACCEPT — authorize WiFi via Omada
-// ══════════════════════════════════════════════
-function doAccept(){
-  apiPost('/portal/accept', {}, S.authToken).then(function(data){
-    if(!data.success){
-      // WiFi auth failed but OTP verified — still proceed to choice screen
-      console.warn('[Portal] Accept failed:', data.message);
-    }
-    // Show choice screen
-    showView('v-choice');
-    var glyph=document.getElementById('doneGlyph');
-    glyph.style.borderColor='var(--dG)';
-    glyph.style.boxShadow='0 0 32px rgba(32,255,102,.25)';
-    setTimeout(startDisco,200);
-  }).catch(function(e){
-    console.warn('[Portal] Accept error:', e);
-    showView('v-choice');
-    setTimeout(startDisco,200);
-  });
+  },900);
 }
 
 // ══════════════════════════════════════════════
 // DISCO DOT SYSTEM
 // ══════════════════════════════════════════════
-var COLORS = ['#A020FF','#5570FF','#20C0FF','#20FF66','#FFE030','#FF8020','#FF2050'];
-var dots=[], animId, dotCtx, dotW, dotH;
-var DOT_SIZE=6, DOT_GAP=4, DOT_UNIT=DOT_SIZE+DOT_GAP;
+const COLORS = ['#A020FF','#5570FF','#20C0FF','#20FF66','#FFE030','#FF8020','#FF2050'];
+let dots=[], animId, dotCtx, dotW, dotH;
+const DOT_SIZE=6, DOT_GAP=4, DOT_UNIT=DOT_SIZE+DOT_GAP;
 
 function initDots(){
-  var canvas=document.getElementById('dotCanvas');
+  const canvas=document.getElementById('dotCanvas');
   dotCtx=canvas.getContext('2d');
   sizeDots();
   window.addEventListener('resize',sizeDots);
 }
 
 function sizeDots(){
-  var card=document.getElementById('discoCard');
-  var r=card.getBoundingClientRect();
+  const card=document.getElementById('discoCard');
+  const r=card.getBoundingClientRect();
   dotW=r.width||370; dotH=r.height||120;
-  var dpr=window.devicePixelRatio||1;
-  var canvas=document.getElementById('dotCanvas');
+  const dpr=window.devicePixelRatio||1;
+  const canvas=document.getElementById('dotCanvas');
   canvas.width=dotW*dpr; canvas.height=dotH*dpr;
   canvas.style.width=dotW+'px'; canvas.style.height=dotH+'px';
   dotCtx.scale(dpr,dpr);
@@ -1246,18 +1172,18 @@ function sizeDots(){
 
 function buildDotGrid(){
   dots=[];
-  var margin=6;
-  var cols=Math.floor(dotW/DOT_UNIT);
-  var rows=Math.floor(dotH/DOT_UNIT);
+  const margin=6;
+  const cols=Math.floor(dotW/DOT_UNIT);
+  const rows=Math.floor(dotH/DOT_UNIT);
 
-  for(var r=0;r<rows;r++){
-    for(var c=0;c<cols;c++){
-      var x=c*DOT_UNIT+margin;
-      var y=r*DOT_UNIT+margin;
-      var isTop=r===0, isBot=r===rows-1, isLeft=c===0, isRight=c===cols-1;
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const x=c*DOT_UNIT+margin;
+      const y=r*DOT_UNIT+margin;
+      const isTop=r===0, isBot=r===rows-1, isLeft=c===0, isRight=c===cols-1;
       if(!isTop&&!isBot&&!isLeft&&!isRight) continue;
       dots.push({
-        x:x, y:y,
+        x, y,
         colorIdx: Math.floor(Math.random()*COLORS.length),
         phase: Math.random()*Math.PI*2,
         speed: 0.4+Math.random()*0.8,
@@ -1270,12 +1196,12 @@ function buildDotGrid(){
   }
 }
 
-var discoRunning=false;
+let discoRunning=false;
 function startDisco(){
   if(discoRunning) return;
   discoRunning=true;
-  dots.forEach(function(d,i){
-    setTimeout(function(){
+  dots.forEach((d,i)=>{
+    setTimeout(()=>{
       d.active=true;
       d.targetAlpha=0.8+Math.random()*0.2;
     },i*8+Math.random()*200);
@@ -1287,16 +1213,16 @@ function stopDisco(){
   discoRunning=false;
   cancelAnimationFrame(animId);
   dotCtx.clearRect(0,0,dotW,dotH);
-  dots.forEach(function(d){ d.active=false; d.alpha=0; });
+  dots.forEach(d=>{ d.active=false; d.alpha=0; });
 }
 
-var lastT=0;
-function animateDots(ts){
-  ts=ts||0;
+let lastT=0;
+function animateDots(ts=0){
   if(!discoRunning) return;
+  const dt=Math.min((ts-lastT)/1000,.05); lastT=ts;
   dotCtx.clearRect(0,0,dotW,dotH);
 
-  dots.forEach(function(d){
+  dots.forEach(d=>{
     d.alpha+=(d.targetAlpha-d.alpha)*0.08;
     if(d.active && Math.random()<0.003){
       d.colorIdx=(d.colorIdx+1)%COLORS.length;
@@ -1313,30 +1239,15 @@ function animateDots(ts){
   });
 
   dotCtx.globalAlpha=1;
-  lastT=ts;
   animId=requestAnimationFrame(animateDots);
 }
 
 // ══════════════════════════════════════════════
-// JOIN / BROWSE / BOOKMARK
+// JOIN → direct redirect to clubicles.club
 // ══════════════════════════════════════════════
 function joinClubicles(){
   snd.success();
   window.location.href='https://www.clubicles.club';
-}
-
-function bookmarkAndSkip(){
-  snd.pop();
-  toast('BOOKMARK CLUBICLES.CLUB · CREATE PROFILE ANYTIME');
-  setTimeout(function(){
-    window.location.href='http://captive.apple.com/hotspot-detect.html';
-  }, 2200);
-}
-
-function browse(){
-  snd.tap();
-  var url = PORTAL.redirectUrl || 'http://captive.apple.com/hotspot-detect.html';
-  window.location.href = url;
 }
 
 // ══════════════════════════════════════════════
@@ -1346,7 +1257,7 @@ function openFounder(){
   snd.open();
   document.getElementById('founderModal').classList.add('open');
   document.body.style.overflow='hidden';
-  setTimeout(function(){document.getElementById('fcName').focus()},400);
+  setTimeout(()=>document.getElementById('fcName').focus(),400);
 }
 
 function closeFounder(){
@@ -1360,39 +1271,61 @@ function closeFounderOutside(e){
 }
 
 function sendToWhatsApp(){
-  var name = document.getElementById('fcName').value.trim();
-  var desig = document.getElementById('fcDesig').value.trim();
-  var msg   = document.getElementById('fcMsg').value.trim();
+  const name = document.getElementById('fcName').value.trim();
+  const desig = document.getElementById('fcDesig').value.trim();
+  const msg   = document.getElementById('fcMsg').value.trim();
 
   if(!name){ document.getElementById('fcName').focus(); snd.err(); return; }
 
   snd.success();
 
-  var txt = [
-    '*CLUBICLES FOUNDER CONNECT*',
-    '',
-    '*Name:* '+name,
-    desig ? '*Designation:* '+desig : '',
-    '',
-    '*Message:*',
+  const txt = [
+    `*CLUBICLES FOUNDER CONNECT*`,
+    ``,
+    `*Name:* ${name}`,
+    desig ? `*Designation:* ${desig}` : '',
+    ``,
+    `*Message:*`,
     msg || 'I would like to collaborate.',
-    '',
-    '_Sent via Clubicles WiFi Portal_'
-  ].filter(function(l){return l!==undefined}).join('\n');
+    ``,
+    `_Sent via Clubicles WiFi Portal_`
+  ].filter(l=>l!==undefined).join('\n');
 
-  var waUrl = 'https://wa.me/916292306090?text='+encodeURIComponent(txt);
+  const waUrl = `https://wa.me/916292306090?text=${encodeURIComponent(txt)}`;
   window.open(waUrl,'_blank');
   closeFounder();
+}
+
+
+function showDone(){
+  // deprecated — flow ends at v-choice
+}
+
+function bookmarkAndSkip(){
+  snd.pop();
+  toast('BOOKMARK CLUBICLES.CLUB · CREATE PROFILE ANYTIME');
+  // Give user a moment to see the toast, then release to internet
+  setTimeout(()=>{
+    window.location.href='http://captive.apple.com/hotspot-detect.html';
+  }, 2200);
+}
+
+// ══════════════════════════════════════════════
+// BROWSE (skip — standard captive portal bypass)
+// ══════════════════════════════════════════════
+function browse(){
+  snd.tap();
+  window.location.href='http://captive.apple.com/hotspot-detect.html';
 }
 
 // ══════════════════════════════════════════════
 // TOAST
 // ══════════════════════════════════════════════
 function toast(msg){
-  var t=document.createElement('div');
+  const t=document.createElement('div');
   t.className='toast'; t.textContent=msg;
   document.body.appendChild(t);
-  setTimeout(function(){t.remove()},2500);
+  setTimeout(()=>t.remove(),2500);
 }
 </script>
 </body>

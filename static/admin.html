@@ -182,6 +182,24 @@ tbody td{padding:8px 12px;font-size:.68rem;color:#ccc;white-space:nowrap}
       <div class="stat-card"><div class="label">Devices (Infra)</div><div class="value" id="statDevices">—</div><div class="sub">APs / Switches</div></div>
     </div>
 
+    <!-- SMS Usage -->
+    <div class="sms-usage" style="background:var(--card);border:1px solid var(--br);border-radius:10px;padding:16px 20px;margin-bottom:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:.85rem;color:var(--gr);">SMS USAGE</div>
+        <div style="font-size:.75rem;color:var(--gr);" id="smsLabel">—</div>
+      </div>
+      <div style="background:#222;border-radius:8px;height:20px;overflow:hidden;position:relative;">
+        <div id="smsBar" style="background:#39FF14;height:100%;width:0%;border-radius:8px;transition:width .5s;"></div>
+        <span id="smsPct" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.65rem;font-weight:700;color:#fff;">0%</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.7rem;color:var(--gr);">
+        <span>Sent: <b style="color:#fff" id="smsSent">0</b></span>
+        <span>Agreed: <b style="color:#fff" id="smsAgreed">108</b></span>
+        <span>Cap: <b style="color:#fff" id="smsCap">150</b></span>
+        <span>Remaining: <b id="smsRemaining" style="color:#39FF14">—</b></span>
+      </div>
+    </div>
+
     <!-- Settings -->
     <div class="settings-panel" id="settingsPanel">
       <h3>SESSION SETTINGS</h3>
@@ -304,7 +322,7 @@ async function apiPut(path, body) {
 // ── REFRESH ──
 async function refreshAll() {
   checkHealth();
-  await Promise.all([loadUsers(''), loadToday(), loadStats(), loadInfraDevices(), loadSettings()]);
+  await Promise.all([loadUsers(''), loadToday(), loadStats(), loadInfraDevices(), loadSettings(), loadSmsStats()]);
 }
 async function checkHealth() {
   const dot = document.getElementById('healthDot');
@@ -401,6 +419,25 @@ async function saveSettings() {
 function toggleSettings() {
   var p = document.getElementById('settingsPanel');
   p.style.display = p.style.display==='none'?'block':'none';
+}
+async function loadSmsStats() {
+  var data = await apiFetch('/sms/stats');
+  if (!data) return;
+  var sent = data.sent || 0, agreed = data.agreedLimit || 108, cap = data.hardCap || 150;
+  var pct = agreed > 0 ? Math.round((sent/agreed)*100) : 0;
+  var remaining = Math.max(0, cap - sent);
+  var bar = document.getElementById('smsBar');
+  var color = pct >= 100 ? '#ff4444' : pct >= 80 ? '#ffaa00' : '#39FF14';
+  bar.style.width = Math.min(pct, 100) + '%';
+  bar.style.background = color;
+  document.getElementById('smsPct').textContent = pct + '%';
+  document.getElementById('smsSent').textContent = sent;
+  document.getElementById('smsAgreed').textContent = agreed;
+  document.getElementById('smsCap').textContent = cap;
+  var remEl = document.getElementById('smsRemaining');
+  remEl.textContent = remaining;
+  remEl.style.color = remaining <= 20 ? '#ff4444' : '#39FF14';
+  document.getElementById('smsLabel').textContent = sent + ' / ' + agreed + (data.capped ? ' — CAPPED' : '');
 }
 
 // ── CHART ──
