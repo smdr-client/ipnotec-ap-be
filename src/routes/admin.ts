@@ -167,8 +167,19 @@ admin.delete('/sessions/:id', adminMiddleware, async (c) => {
         .set({ status: 'revoked' })
         .where(eq(sessions.id, sessionId));
 
-    // Also kick from WiFi via Omada
+    // Also revoke ALL active sessions for this MAC to prevent auto-reauth
     const mac = existing[0].macAddress;
+    if (mac && mac !== 'DIRECT-ACCESS') {
+        await db
+            .update(sessions)
+            .set({ status: 'revoked' })
+            .where(
+                and(
+                    eq(sessions.macAddress, mac),
+                    eq(sessions.status, 'active')
+                )
+            );
+    }
     let kicked = false;
     if (mac && mac !== 'DIRECT-ACCESS') {
         try {
@@ -488,11 +499,35 @@ admin.get('/omada/devices', async (c) => {
 });
 
 // ────────────────────────────────────────────
-// POST /omada/clients/:mac/kick — Unauthorize/disconnect a client
+// POST /omada/clients/:mac/kick — Unauthorize/disconnect a client + revoke sessions
 // ────────────────────────────────────────────
 admin.post('/omada/clients/:mac/kick', adminMiddleware, async (c) => {
     const mac = c.req.param('mac');
     try {
+        // Revoke all active DB sessions for this MAC so auto-reauth won't reconnect
+        const normalizedMac = mac.toUpperCase().replace(/[:-]/g, '-');
+        await db
+            .update(sessions)
+            .set({ status: 'revoked' })
+            .where(
+                and(
+                    eq(sessions.macAddress, normalizedMac),
+                    eq(sessions.status, 'active')
+                )
+            );
+        // Also try original MAC format (lowercase, colons, etc.)
+        if (normalizedMac !== mac) {
+            await db
+                .update(sessions)
+                .set({ status: 'revoked' })
+                .where(
+                    and(
+                        eq(sessions.macAddress, mac),
+                        eq(sessions.status, 'active')
+                    )
+                );
+        }
+
         const result = await omada.unauthorizeClient(mac);
         return c.json({ success: result.success, errorCode: result.errorCode });
     } catch (err) {
