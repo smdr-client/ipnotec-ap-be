@@ -1198,24 +1198,28 @@ function verifyOTP(){
 
 // ══════════════════════════════════════════════
 // ACCEPT — authorize WiFi via Omada
+// Show choice screen FIRST, then authorize after a delay
+// so Android captive portal browser doesn't auto-close before user reads it
 // ══════════════════════════════════════════════
 function doAccept(){
-  apiPost('/portal/accept', {}, S.authToken).then(function(data){
-    if(!data.success){
-      // WiFi auth failed but OTP verified — still proceed to choice screen
-      console.warn('[Portal] Accept failed:', data.message);
-    }
-    // Show choice screen
-    showView('v-choice');
-    var glyph=document.getElementById('doneGlyph');
-    glyph.style.borderColor='var(--dG)';
-    glyph.style.boxShadow='0 0 32px rgba(32,255,102,.25)';
-    setTimeout(startDisco,200);
-  }).catch(function(e){
-    console.warn('[Portal] Accept error:', e);
-    showView('v-choice');
-    setTimeout(startDisco,200);
-  });
+  // Show the final screen immediately
+  showView('v-choice');
+  var glyph=document.getElementById('doneGlyph');
+  glyph.style.borderColor='var(--dG)';
+  glyph.style.boxShadow='0 0 32px rgba(32,255,102,.25)';
+  setTimeout(startDisco,200);
+
+  // Delay the actual Omada authorization by 5 seconds
+  // so user has time to see the end page before captive portal auto-closes
+  setTimeout(function(){
+    apiPost('/portal/accept', {}, S.authToken).then(function(data){
+      if(!data.success){
+        console.warn('[Portal] Accept failed:', data.message);
+      }
+    }).catch(function(e){
+      console.warn('[Portal] Accept error:', e);
+    });
+  }, 5000);
 }
 
 // ══════════════════════════════════════════════
