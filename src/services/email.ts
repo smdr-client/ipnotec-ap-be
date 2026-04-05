@@ -134,11 +134,13 @@ export async function sendUsageAlertEmail(usage: {
         : `📊 SMS Usage ${usage.pct}% — ${usage.sent}/${usage.agreedLimit} used`;
 
     const overLimitNote = isCritical
-        ? `<div style="background:#ff444422;border:1px solid #ff4444;border-radius:8px;padding:12px;margin-bottom:16px;text-align:center;">
+        ? `<div style="background:#2d1111;border:1px solid #ff4444;border-radius:8px;padding:12px;margin-bottom:16px;text-align:center;">
             <div style="font-size:1.1rem;font-weight:700;color:#ff4444;">⚠️ OVER AGREED LIMIT</div>
-            <div style="font-size:.8rem;color:#ff8888;margin-top:4px;">${overCount} SMS sent beyond the agreed ${usage.agreedLimit} limit. Hard cap is ${usage.hardCap}.</div>
+            <div style="font-size:.8rem;color:#ff8888;margin-top:4px;">${overCount} SMS sent beyond the agreed ${usage.agreedLimit} limit.</div>
            </div>`
         : '';
+
+    const remainingFromAgreed = Math.max(0, usage.agreedLimit - usage.sent);
 
     try {
         await smtp.sendMail({
@@ -146,40 +148,57 @@ export async function sendUsageAlertEmail(usage: {
             to: recipients.join(', '),
             subject,
             html: `
-                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 500px; margin: 0 auto; background: #111; color: #fff; border-radius: 12px; overflow: hidden;">
-                    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 24px; text-align: center;">
-                        <h1 style="margin: 0; font-size: 1.5rem; color: #fff;">SMS Usage Alert</h1>
-                        <p style="margin: 4px 0 0; color: rgba(255,255,255,0.8); font-size: 0.85rem;">Clubicles WiFi Portal</p>
-                    </div>
-                    <div style="padding: 24px;">
-                        ${overLimitNote}
-                        <!-- Progress bar -->
-                        <div style="background: #222; border-radius: 8px; height: 24px; overflow: hidden; margin-bottom: 20px; position: relative;">
-                            <div style="background: ${statusColor}; height: 100%; width: ${Math.min(usage.pct, 100)}%; border-radius: 8px; transition: width 0.3s;"></div>
-                            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.75rem; font-weight: 700; color: #fff;">${usage.pct}%</span>
-                        </div>
-                        <div style="text-align: center; margin-bottom: 20px;">
-                            <span style="display: inline-block; background: ${statusColor}22; color: ${statusColor}; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">${statusLabel}</span>
-                        </div>
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <tr>
-                                <td style="padding: 10px 0; color: #888; font-size: 0.85rem;">SMS Sent</td>
-                                <td style="padding: 10px 0; color: #fff; font-weight: 600; text-align: right; font-size: 1.1rem;">${usage.sent}</td>
-                            </tr>
-                            <tr style="border-top: 1px solid #333;">
-                                <td style="padding: 10px 0; color: #888; font-size: 0.85rem;">Agreed Limit</td>
-                                <td style="padding: 10px 0; color: #aaa; text-align: right;">${usage.agreedLimit}</td>
-                            </tr>
-                            <tr style="border-top: 1px solid #333;">
-                                <td style="padding: 10px 0; color: #888; font-size: 0.85rem;">Hard Cap</td>
-                                <td style="padding: 10px 0; color: #aaa; text-align: right;">${usage.hardCap}</td>
-                            </tr>
-                            <tr style="border-top: 1px solid #333;">
-                                <td style="padding: 10px 0; color: #888; font-size: 0.85rem;">Remaining</td>
-                                <td style="padding: 10px 0; color: ${remaining <= 20 ? '#ff4444' : '#39FF14'}; font-weight: 600; text-align: right;">${remaining}</td>
-                            </tr>
-                        </table>
-                    </div>
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background:#000000;border-radius:12px;overflow:hidden;">
+                        <tr>
+                            <td style="background:#7c3aed;padding:28px 24px;text-align:center;">
+                                <h1 style="margin:0;font-size:1.4rem;color:#ffffff;font-weight:700;">📊 SMS Usage Alert</h1>
+                                <p style="margin:6px 0 0;color:#e0d4fc;font-size:0.8rem;">Clubicles WiFi Portal</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding:24px;background:#000000;">
+                                ${overLimitNote}
+                                <!-- Big number -->
+                                <div style="text-align:center;margin-bottom:20px;">
+                                    <div style="font-size:3rem;font-weight:800;color:${statusColor};line-height:1;">${usage.pct}%</div>
+                                    <div style="font-size:0.8rem;color:#999;margin-top:4px;">${usage.sent} of ${usage.agreedLimit} SMS used</div>
+                                </div>
+                                <!-- Progress bar -->
+                                <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+                                    <tr>
+                                        <td style="background:#1a1a1a;border-radius:10px;height:14px;padding:2px;">
+                                            <div style="background:${statusColor};height:10px;width:${Math.min(usage.pct, 100)}%;border-radius:8px;"></div>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div style="text-align:center;margin-bottom:24px;">
+                                    <span style="display:inline-block;background:${isCritical ? '#2d1111' : isWarning ? '#2d2211' : '#112d11'};color:${statusColor};padding:5px 16px;border-radius:20px;font-size:0.75rem;font-weight:700;letter-spacing:0.5px;">${statusLabel}</span>
+                                </div>
+                                <!-- Stats -->
+                                <table width="100%" cellpadding="0" cellspacing="0" style="background:#111111;border-radius:10px;overflow:hidden;">
+                                    <tr>
+                                        <td style="padding:14px 16px;color:#999;font-size:0.85rem;">SMS Sent</td>
+                                        <td style="padding:14px 16px;color:#ffffff;font-weight:700;text-align:right;font-size:1.1rem;">${usage.sent}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2" style="border-top:1px solid #222;"></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:14px 16px;color:#999;font-size:0.85rem;">Agreed Limit</td>
+                                        <td style="padding:14px 16px;color:#cccccc;text-align:right;font-weight:600;">${usage.agreedLimit}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2" style="border-top:1px solid #222;"></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:14px 16px;color:#999;font-size:0.85rem;">Remaining</td>
+                                        <td style="padding:14px 16px;color:${remainingFromAgreed <= 20 ? '#ff4444' : '#00e676'};font-weight:700;text-align:right;font-size:1.1rem;">${remainingFromAgreed}</td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
             `,
         });
