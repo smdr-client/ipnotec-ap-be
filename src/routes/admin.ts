@@ -333,6 +333,8 @@ admin.get('/users', async (c) => {
             name: user.name,
             email: user.email,
             phone: user.phone,
+            pincode: user.pincode || '',
+            city: user.city || '',
             createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
             totalSessions: userSessions.length,
             deviceCount: macMap.size,

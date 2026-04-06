@@ -110,7 +110,7 @@ window.__PORTAL__ = {
 // ────────────────────────────────────────────
 portal.post('/send-otp', async (c) => {
     const body = await c.req.json();
-    const { name, email, phone, clientMac, apMac, ssid, radioId, redirectUrl } = body;
+    const { name, email, phone, pincode, city, clientMac, apMac, ssid, radioId, redirectUrl } = body;
 
     // --- Validate ---
     if (!name || typeof name !== 'string' || name.trim().length === 0 || name.trim().length > 100) {
@@ -156,13 +156,15 @@ portal.post('/send-otp', async (c) => {
     if (existingUser.length > 0) {
         await db
             .update(users)
-            .set({ name: name.trim(), email: email.trim() })
+            .set({ name: name.trim(), email: email.trim(), pincode: pincode?.trim() || null, city: city?.trim() || null })
             .where(eq(users.phone, phone));
     } else {
         await db.insert(users).values({
             name: name.trim(),
             email: email.trim(),
             phone,
+            pincode: pincode?.trim() || null,
+            city: city?.trim() || null,
         });
     }
 
@@ -282,6 +284,8 @@ portal.post('/verify-otp', async (c) => {
         email: user[0].email,
         phone,
         clientMac,
+        pincode: user[0].pincode || '',
+        city: user[0].city || '',
     }).catch((err) => console.error('[Portal] Notification email error:', err));
 
     // --- Sign auth token ---

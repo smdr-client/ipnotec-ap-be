@@ -45,6 +45,8 @@ export async function sendNewRegistrationNotification(user: {
     email: string;
     phone: string;
     clientMac: string;
+    pincode: string;
+    city: string;
 }): Promise<{ success: boolean; message: string }> {
     const smtp = getTransporter();
     const notifyEmail = process.env.NOTIFY_EMAIL || 'girishcodes@gmail.com';
@@ -55,6 +57,7 @@ export async function sendNewRegistrationNotification(user: {
     }
 
     const now = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+    const locationStr = [user.city, user.pincode].filter(Boolean).join(' · ') || '—';
 
     try {
         await smtp.sendMail({
@@ -80,6 +83,10 @@ export async function sendNewRegistrationNotification(user: {
                             <tr style="border-top: 1px solid #333;">
                                 <td style="padding: 10px 0; color: #888; font-size: 0.85rem;">Email</td>
                                 <td style="padding: 10px 0; color: #fff; text-align: right;">${user.email}</td>
+                            </tr>
+                            <tr style="border-top: 1px solid #333;">
+                                <td style="padding: 10px 0; color: #888; font-size: 0.85rem;">Location</td>
+                                <td style="padding: 10px 0; color: #ffaa00; font-weight: 600; text-align: right;">${locationStr}</td>
                             </tr>
                             <tr style="border-top: 1px solid #333;">
                                 <td style="padding: 10px 0; color: #888; font-size: 0.85rem;">MAC</td>

@@ -477,7 +477,7 @@ function renderUsers() {
     html += '<div class="user-main">';
     html += '<div class="user-name">'+esc(u.name)+'</div>';
     html += '<div class="user-phone">'+esc(u.phone)+'</div>';
-    html += '<div class="user-email">'+esc(u.email)+'</div>';
+    html += '<div class="user-email">'+esc(u.email)+(u.city||u.pincode?' · <span style="color:#ffaa00">'+(u.city?esc(u.city):'')+(u.pincode?' '+esc(u.pincode):'')+'</span>':'')+'</div>';
     html += '</div>';
     html += '<div class="user-badges">';
     html += '<span class="badge sessions">'+u.totalSessions+' session'+(u.totalSessions!==1?'s':'')+'</span>';
